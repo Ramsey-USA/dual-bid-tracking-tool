@@ -241,16 +241,19 @@ class App {
     const tbody = document.getElementById('jobs-table-body');
     if (!tbody) return;
     if (!jobs.length) {
-      tbody.innerHTML = '<tr><td colspan="5">No jobs found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8">No jobs found.</td></tr>';
       return;
     }
     tbody.innerHTML = jobs.map(job => `
       <tr>
         <td>${this.escapeHtml(job.projectName)}</td>
         <td>${job.deadline || ''}</td>
-        <td>${this.escapeHtml(job.estimator || '')}</td>
+        <td>${job.followUpDate || ''}</td>
+        <td>${typeof job.estimatingCost !== 'undefined' && job.estimatingCost !== null ? '$' + Number(job.estimatingCost).toFixed(2) : ''}</td>
+        <td>${typeof job.bidAmount !== 'undefined' && job.bidAmount !== null ? '$' + Number(job.bidAmount).toFixed(2) : ''}</td>
+        <td>${typeof job.bondAmount !== 'undefined' && job.bondAmount !== null ? '$' + Number(job.bondAmount).toFixed(2) : ''}</td>
         <td>${this.escapeHtml(job.status || '')}</td>
-        <td><button data-id="${job.id}" class="edit-btn">Edit</button></td>
+        <td class="table-actions"><button data-id="${job.id}" class="edit-btn">Edit</button></td>
       </tr>
     `).join('');
     // attach edit listeners

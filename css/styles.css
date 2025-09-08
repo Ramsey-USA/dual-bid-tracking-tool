@@ -780,6 +780,34 @@ body {
 .jobs-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed; /* ensure columns align to header */
+}
+
+.jobs-table thead th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jobs-table tbody td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Column width suggestions (sum <= 100%) */
+.jobs-table th:nth-child(1), .jobs-table td:nth-child(1) { width: 22%; }
+.jobs-table th:nth-child(2), .jobs-table td:nth-child(2) { width: 12%; }
+.jobs-table th:nth-child(3), .jobs-table td:nth-child(3) { width: 12%; }
+.jobs-table th:nth-child(4), .jobs-table td:nth-child(4) { width: 12%; }
+.jobs-table th:nth-child(5), .jobs-table td:nth-child(5) { width: 12%; }
+.jobs-table th:nth-child(6), .jobs-table td:nth-child(6) { width: 12%; }
+.jobs-table th:nth-child(7), .jobs-table td:nth-child(7) { width: 10%; }
+.jobs-table th:nth-child(8), .jobs-table td:nth-child(8) { width: 8%; }
+
+.table-actions button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
 }
 
 .jobs-table th {
