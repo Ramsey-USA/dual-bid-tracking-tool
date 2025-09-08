@@ -39,13 +39,13 @@
                 </div>
                 
                 <nav class="nav">
-                    <button id="manage-estimators-btn" class="btn btn-outline" title="Manage Estimators">
+                    <button id="manage-estimators-btn" type="button" class="btn btn-outline" title="Manage Estimators">
                         <span>👥</span> Estimators
                     </button>
-                    <button id="add-job-btn" class="btn btn-primary">
+                    <button id="add-job-btn" type="button" class="btn btn-primary">
                         <span>+</span> Add New Job
                     </button>
-                    <button id="export-btn" class="btn btn-secondary">
+                    <button id="export-btn" type="button" class="btn btn-secondary">
                         <span>📊</span> Export Data
                     </button>
                 </nav>
@@ -303,6 +303,7 @@
             </div>
             
             <form id="job-form" class="job-form">
+                <input type="hidden" id="job-id" name="jobId">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="project-name">Project Name *</label>

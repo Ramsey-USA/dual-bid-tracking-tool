@@ -1050,6 +1050,12 @@ body {
     color: var(--gray-600);
 }
 
+/* Prevent background scrolling when modal is open */
+body.modal-open {
+    height: 100vh;
+    overflow: hidden;
+}
+
 /* ===== FORM STYLES ===== */
 .job-form {
     padding: var(--spacing-6);
