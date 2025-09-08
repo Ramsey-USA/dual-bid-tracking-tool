@@ -408,6 +408,18 @@ class App {
     setText('mhc-bid-value', `$${totals.mhcBidValue.toFixed(2)}`);
     setText('hdd-bid-value', `$${totals.hddBidValue.toFixed(2)}`);
 
+    // Update footer trackers if present
+    try {
+      setText('footer-total-jobs', totals.total);
+      setText('footer-total-value', `$${totals.totalBidValue.toFixed(2)}`);
+      const copyEl = document.getElementById('footer-copyright-company');
+      if (copyEl) {
+        copyEl.textContent = (this.currentCompany || '').toLowerCase() === 'hdd' ? 'High Desert Drywall' : 'MH Construction';
+      }
+    } catch (e) {
+      // ignore footer update errors
+    }
+
     // Empty state visibility: base on visible jobs
     const emptyState = document.getElementById('empty-state');
     if (emptyState) emptyState.style.display = (visibleJobs && visibleJobs.length > 0) ? 'none' : 'block';

@@ -1649,6 +1649,19 @@ body.modal-open {
     .logo h1 {
         font-size: var(--font-size-2xl);
     }
+
+    /* Make table horizontally and vertically scrollable on smaller screens */
+    .table-container {
+        max-height: 50vh;
+        overflow: auto; /* allow both axes */
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+
+    .jobs-table {
+        min-width: 900px; /* force horizontal scroll on narrow viewports */
+        width: max-content;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1721,6 +1734,19 @@ body.modal-open {
     .estimator-edit-btn,
     .estimator-delete-btn {
         width: 100%;
+    }
+
+    /* Slightly larger max-height on very small screens and allow horizontal scroll */
+    .table-container {
+        max-height: 60vh;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+
+    .jobs-table {
+        min-width: 820px;
+        width: max-content;
     }
 }
 
