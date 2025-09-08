@@ -26,6 +26,7 @@ class App {
     this.currentCompany = 'mhc';
     this.estimators = [];
     this.jobs = [];
+    this.allJobs = [];
     this.currentView = 'table';
 
     // Bind methods
@@ -101,8 +102,25 @@ class App {
       // ensure theme set before rendering
       this.applyTheme();
       const dbService = await getDbService();
+
+      // Load estimators for the current company (used in forms/filters)
       this.estimators = await dbService.getEstimatorsByCompany(this.currentCompany);
-      this.jobs = await dbService.getJobsByCompany(this.currentCompany);
+
+      // Load jobs for both companies so dashboard totals reflect combined data
+      const mhcPromise = dbService.getJobsByCompany('mhc').catch(() => []);
+      const hddPromise = dbService.getJobsByCompany('hdd').catch(() => []);
+      const [mhcJobs, hddJobs] = await Promise.all([mhcPromise, hddPromise]);
+      this.allJobs = Array.isArray(mhcJobs) || Array.isArray(hddJobs) ? [...(mhcJobs || []), ...(hddJobs || [])] : [];
+
+      // Set visible jobs based on the selected company; if no selection, show combined
+      if ((this.currentCompany || '').toLowerCase() === 'mhc') {
+        this.jobs = await dbService.getJobsByCompany('mhc').catch(() => []);
+      } else if ((this.currentCompany || '').toLowerCase() === 'hdd') {
+        this.jobs = await dbService.getJobsByCompany('hdd').catch(() => []);
+      } else {
+        this.jobs = this.allJobs.slice();
+      }
+
       this.populateEstimatorDropdown();
       this.populateEstimatorFilter();
       this.renderJobs();
@@ -111,6 +129,7 @@ class App {
       // Fallback to empty lists so UI remains usable
       this.estimators = this.estimators || [];
       this.jobs = this.jobs || [];
+      this.allJobs = this.allJobs || (Array.isArray(this.jobs) ? this.jobs.slice() : []);
       this.populateEstimatorDropdown();
       this.populateEstimatorFilter();
       this.renderJobs();
@@ -342,7 +361,8 @@ class App {
 
   // Update main dashboard counters to reflect current jobs
   updateDashboardStats(jobs) {
-    const allJobs = Array.isArray(this.jobs) ? this.jobs : [];
+    // Use combined allJobs for totals (both MHC and HDD)
+    const allJobs = Array.isArray(this.allJobs) ? this.allJobs : (Array.isArray(this.jobs) ? this.jobs : []);
     const visibleJobs = Array.isArray(jobs) ? jobs : [];
 
     const totals = {
