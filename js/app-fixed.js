@@ -52,8 +52,54 @@ class App {
     }
   }
 
+  // Apply CSS theme class based on currentCompany
+  applyTheme() {
+    try {
+      document.body.classList.remove('mhc-theme', 'hdd-theme');
+      const isHdd = (this.currentCompany || '').toLowerCase() === 'hdd';
+      if (isHdd) document.body.classList.add('hdd-theme');
+      else document.body.classList.add('mhc-theme');
+
+      // Update header and footer text/icons
+      const titleEl = document.getElementById('company-title');
+      const subtitleEl = document.getElementById('company-subtitle');
+      const footerName = document.getElementById('footer-company-name');
+      const footerTagline = document.getElementById('footer-company-tagline');
+      const companyIcon = document.getElementById('company-icon');
+      const footerIcon = document.getElementById('footer-icon');
+      const estimatorsModalTitle = document.getElementById('estimators-modal-title');
+
+      if (isHdd) {
+        if (titleEl) titleEl.textContent = 'High Desert Drywall';
+        if (subtitleEl) subtitleEl.textContent = 'Specialty Drywall & Finishing';
+        if (footerName) footerName.textContent = 'High Desert Drywall';
+        if (footerTagline) footerTagline.textContent = 'Precision Drywall Solutions';
+        if (companyIcon) companyIcon.textContent = '🏢';
+        if (footerIcon) footerIcon.textContent = '🏢';
+        if (estimatorsModalTitle) estimatorsModalTitle.textContent = 'Manage Estimators - High Desert Drywall';
+      } else {
+        if (titleEl) titleEl.textContent = 'MH Construction';
+        if (subtitleEl) subtitleEl.textContent = 'Professional Construction Services';
+        if (footerName) footerName.textContent = 'MH Construction';
+        if (footerTagline) footerTagline.textContent = 'Building Excellence Since 2010';
+        if (companyIcon) companyIcon.textContent = '🪖';
+        if (footerIcon) footerIcon.textContent = '🪖';
+        if (estimatorsModalTitle) estimatorsModalTitle.textContent = 'Manage Estimators - MH Construction';
+      }
+
+      // Update any other references such as export label
+      const exportAllLabel = document.getElementById('export-all-label');
+      if (exportAllLabel) exportAllLabel.textContent = isHdd ? 'All High Desert Drywall Jobs' : 'All Company Jobs';
+
+    } catch (e) {
+      // ignore
+    }
+  }
+
   async loadInitialData() {
     try {
+      // ensure theme set before rendering
+      this.applyTheme();
       const dbService = await getDbService();
       this.estimators = await dbService.getEstimatorsByCompany(this.currentCompany);
       this.jobs = await dbService.getJobsByCompany(this.currentCompany);
@@ -100,6 +146,8 @@ class App {
       if (companySelect) {
         companySelect.addEventListener('change', async (e) => {
           this.currentCompany = e.target.value;
+          // apply theme immediately for visual feedback
+          this.applyTheme();
           await this.loadInitialData();
         });
       }
@@ -392,13 +440,55 @@ class App {
     const container = document.getElementById('jobs-card-container');
     if (!container) return;
     if (!jobs.length) { container.innerHTML = '<div>No jobs found.</div>'; return; }
-    container.innerHTML = jobs.map(job => `
-      <div class="job-card">
-        <h3>${this.escapeHtml(job.projectName)}</h3>
-        <p><strong>Estimator:</strong> ${this.escapeHtml(job.estimator||'')}</p>
-        <p><strong>Deadline:</strong> ${job.deadline||''}</p>
+    container.innerHTML = jobs.map(job => {
+      const id = job.id || job.key || '';
+      const projectName = this.escapeHtml(this.getJobField(job, ['projectName','name','title','project']) || 'Untitled');
+      const client = this.escapeHtml(this.getJobField(job, ['client','customer']) || '');
+      const location = this.escapeHtml(this.getJobField(job, ['location','site','address']) || '');
+      const estimator = this.escapeHtml(this.getJobField(job, ['estimator','assignedTo']) || '');
+      const deadline = this.getJobField(job, ['deadline','dueDate','date']) || '';
+      const followUp = this.getJobField(job, ['followUpDate','follow_up_date']) || '';
+      const estimatingCost = (typeof job.estimatingCost !== 'undefined' && job.estimatingCost !== null) ? '$' + Number(job.estimatingCost).toFixed(2) : (this.getJobField(job, ['estimating_cost','estimateCost']) || '');
+      const bidAmount = (typeof job.bidAmount !== 'undefined' && job.bidAmount !== null) ? '$' + Number(job.bidAmount).toFixed(2) : (this.getJobField(job, ['bid_amount','amount']) || '');
+      const bondAmount = (typeof job.bondAmount !== 'undefined' && job.bondAmount !== null) ? '$' + Number(job.bondAmount).toFixed(2) : (this.getJobField(job, ['bond_amount']) || '');
+      const statusRaw = (this.getJobField(job, ['status','state']) || '').toString();
+      const status = this.escapeHtml(statusRaw);
+      let statusClass = 'no-bid';
+      const st = statusRaw.toLowerCase();
+      if (st.includes('progress')) statusClass = 'in-progress';
+      else if (st.includes('submitted')) statusClass = 'submitted';
+      else if (st.includes('follow')) statusClass = 'follow-up-required';
+      else if (st.includes('won')) statusClass = 'won';
+      else if (st.includes('lost')) statusClass = 'lost';
+
+      const description = this.escapeHtml(this.getJobField(job, ['description','desc']) || '');
+
+      return `
+      <div class="job-card" data-id="${id}">
+        <div class="job-card-header">
+          <div class="job-card-title">${projectName}</div>
+          <div class="job-card-client text-muted">${client}</div>
+        </div>
+        <div class="job-card-body">
+          <div class="job-card-detail"><strong>Location:</strong> ${location}</div>
+          <div class="job-card-detail"><strong>Estimator:</strong> ${estimator}</div>
+          <div class="job-card-detail"><strong>Deadline:</strong> ${deadline}</div>
+          <div class="job-card-detail"><strong>Follow-up:</strong> ${followUp}</div>
+          <div class="job-card-detail"><strong>Estimating Cost:</strong> ${estimatingCost}</div>
+          <div class="job-card-detail"><strong>Bid Amount:</strong> ${bidAmount}</div>
+          <div class="job-card-detail"><strong>Bond Amount:</strong> ${bondAmount}</div>
+          <div class="job-card-detail"><strong>Status:</strong> <span class="status-badge ${statusClass}">${status}</span></div>
+          <p class="text-muted">${description}</p>
+        </div>
+        <div class="job-card-actions">
+          <button class="btn btn-outline edit-card-btn" data-id="${id}">Edit</button>
+        </div>
       </div>
-    `).join('');
+      `;
+    }).join('');
+
+    // attach edit listeners for cards
+    container.querySelectorAll('.edit-card-btn').forEach(btn => btn.addEventListener('click', (e) => this.editJob(e.target.dataset.id)));
   }
 
   renderEstimatorsList() {

@@ -10,13 +10,13 @@
     --mhc-desert-tan-light: #e2c49c;
     --mhc-desert-tan-dark: #c2a47c;
     
-    /* High Desert Drywall - US Navy Colors */
-    --hdd-navy-blue: #003b4f;
-    --hdd-navy-blue-light: #088199;
-    --hdd-navy-blue-dark: #000066;
-    --hdd-gold: #ffd700;
-    --hdd-gold-light: #ffdf1a;
-    --hdd-gold-dark: #e6c200;
+    /* High Desert Drywall - updated distinct palette (deep slate blue + warm orange accents) */
+    --hdd-navy-blue: #12365A;
+    --hdd-navy-blue-light: #4B78B6;
+    --hdd-navy-blue-dark: #061a33;
+    --hdd-gold: #FF8C42;
+    --hdd-gold-light: #FFB37A;
+    --hdd-gold-dark: #CC6F2F;
     
     /* Status Colors (consistent across themes) */
     --status-progress: #3b82f6;
