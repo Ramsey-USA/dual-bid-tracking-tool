@@ -1,0 +1,1 @@
+cd /workspaces/dual-bid-tracking-tool && node dev-server.js

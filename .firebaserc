@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "dual-bid-tracking"
+  },
+  "targets": {
+    "dual-bid-tracking": {
+      "hosting": {
+        "production": [
+          "dual-bid-tracking"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

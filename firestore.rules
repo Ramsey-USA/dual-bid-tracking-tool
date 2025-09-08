@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Jobs collection rules
+    match /jobs/{jobId} {
+      // Allow read/write for any authenticated user
+      // In production, you might want to add more specific rules
+      allow read, write: if request.auth != null;
+      
+      // Validate job data structure
+      allow create: if request.auth != null 
+        && validateJobData(request.resource.data);
+      
+      allow update: if request.auth != null 
+        && validateJobData(request.resource.data)
+        && resource.data.company == request.resource.data.company; // Prevent company changes
+    }
+    
+    // Estimators collection rules
+    match /estimators/{estimatorId} {
+      allow read, write: if request.auth != null;
+      
+      allow create: if request.auth != null 
+        && validateEstimatorData(request.resource.data);
+    }
+    
+    // Companies collection rules
+    match /companies/{companyId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null; // Restrict in production
+    }
+    
+    // Settings collection rules
+    match /settings/{settingId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null; // Restrict in production
+    }
+    
+    // Helper functions for data validation
+    function validateJobData(data) {
+      return data.keys().hasAll(['title', 'client', 'company', 'status', 'deadline', 'bidValue'])
+        && data.title is string
+        && data.client is string
+        && data.company in ['mhc', 'hdd']
+        && data.status in ['in-progress', 'submitted', 'follow-up-required', 'won', 'lost', 'no-bid']
+        && data.deadline is timestamp
+        && (data.bidValue is number || data.bidValue is string)
+        && data.title.size() > 0
+        && data.client.size() > 0;
+    }
+    
+    function validateEstimatorData(data) {
+      return data.keys().hasAll(['name', 'company'])
+        && data.name is string
+        && data.company in ['mhc', 'hdd']
+        && data.name.size() > 0;
+    }
+    
+    // Allow read access to public data (if any)
+    match /public/{document=**} {
+      allow read: if true;
+    }
+  }
+}

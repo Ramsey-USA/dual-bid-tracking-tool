@@ -1,0 +1,60 @@
+{
+  "name": "dual-bid-tracking-tool",
+  "version": "1.0.0",
+  "description": "Dual company bid tracking dashboard for MH Construction and High Desert Drywall",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev-server.js",
+    "dev:firebase": "npm run firebase:emulators",
+    "build": "npm run build:production",
+    "build:production": "webpack --mode=production",
+    "serve": "firebase serve --only hosting",
+    "deploy": "npm run build:production && firebase deploy",
+    "deploy:hosting": "npm run build:production && firebase deploy --only hosting",
+    "deploy:firestore": "firebase deploy --only firestore",
+    "firebase:init": "firebase init",
+    "firebase:emulators": "firebase emulators:start",
+    "firebase:emulators:ui": "firebase emulators:start --only firestore,hosting --inspect-functions",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint js/**/*.js",
+    "format": "prettier --write js/**/*.js css/**/*.css *.html"
+  },
+  "keywords": [
+    "construction",
+    "bid-tracking",
+    "dashboard",
+    "firebase",
+    "drywall",
+    "project-management"
+  ],
+  "author": "MH Construction & High Desert Drywall",
+  "license": "ISC",
+  "devDependencies": {
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1",
+    "html-webpack-plugin": "^5.5.3",
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3",
+    "file-loader": "^6.2.0",
+    "eslint": "^8.54.0",
+    "prettier": "^3.1.0",
+    "firebase-tools": "^12.9.1"
+  },
+  "dependencies": {
+    "firebase": "^10.7.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/dual-bid-tracking-tool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/dual-bid-tracking-tool/issues"
+  },
+  "homepage": "https://dual-bid-tracking.firebaseapp.com"
+}

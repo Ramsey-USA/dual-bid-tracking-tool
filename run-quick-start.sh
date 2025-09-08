@@ -1,0 +1,1 @@
+cd /workspaces/dual-bid-tracking-tool && chmod +x quick-start.sh && ./quick-start.sh

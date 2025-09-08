@@ -11,8 +11,8 @@
     --mhc-desert-tan-dark: #c2a47c;
     
     /* High Desert Drywall - US Navy Colors */
-    --hdd-navy-blue: #000080;
-    --hdd-navy-blue-light: #1a1a9a;
+    --hdd-navy-blue: #003b4f;
+    --hdd-navy-blue-light: #088199;
     --hdd-navy-blue-dark: #000066;
     --hdd-gold: #ffd700;
     --hdd-gold-light: #ffdf1a;
@@ -25,6 +25,17 @@
     --status-won: #10b981;
     --status-lost: #6b7280;
     --status-nobid: #8b5cf6;
+    
+    /* Additional Colors */
+    --blue-100: #dbeafe;
+    --blue-200: #bfdbfe;
+    --blue-700: #1d4ed8;
+    --red-100: #fee2e2;
+    --red-200: #fecaca;
+    --red-700: #b91c1c;
+    --green-600: #16a34a;
+    --green-700: #15803d;
+    --primary-50: rgba(74, 93, 35, 0.05);
     
     /* Gray Scale */
     --gray-50: #f9fafb;
@@ -70,6 +81,11 @@
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* Common Variables */
+    --text-color: var(--gray-700);
+    --border-color: var(--gray-300);
+    --primary-rgb: 74, 93, 35;
 }
 
 /* ===== DUAL THEME SYSTEM ===== */
@@ -127,10 +143,38 @@ body {
 
 /* ===== HEADER STYLES ===== */
 .header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 50%, var(--secondary-color) 100%);
     color: white;
-    padding: var(--spacing-6) 0;
-    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-8) 0;
+    box-shadow: var(--shadow-xl);
+    position: relative;
+    overflow: hidden;
+    background-attachment: fixed;
+    background-size: 200% 200%;
+    animation: gradientShift 15s ease infinite;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
+    pointer-events: none;
+}
+
+.header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: headerGlow 8s ease-in-out infinite, floatingParticles 20s linear infinite;
+    pointer-events: none;
 }
 
 .header-content {
@@ -138,17 +182,21 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-6);
+    position: relative;
+    z-index: 2;
 }
 
 .logo {
     display: flex;
     align-items: center;
+    position: relative;
 }
 
 .logo-container {
     display: flex;
     align-items: center;
     gap: var(--spacing-4);
+    animation: logoFloat 6s ease-in-out infinite;
 }
 
 .company-icon {
@@ -158,70 +206,171 @@ body {
     justify-content: center;
     width: 60px;
     height: 60px;
-    background: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
     border-radius: var(--radius-lg);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.company-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: rotate(-45deg);
+    transition: all 0.6s ease;
+    opacity: 0;
 }
 
 .company-icon:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: scale(1.05);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.15) 100%);
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.company-icon:hover::before {
+    opacity: 1;
+    transform: rotate(-45deg) translate(100%, 100%);
 }
 
 .logo-text {
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .logo h1 {
     font-size: var(--font-size-3xl);
     font-weight: 700;
     margin-bottom: var(--spacing-1);
-    transition: all 0.3s ease;
+    transition: all 0.4s ease;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, white 0%, rgba(255,255,255,0.8) 50%, white 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    animation: textShimmer 3s ease-in-out infinite alternate;
+}
+
+.logo h1::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--secondary-color), var(--secondary-color-light));
+    transition: width 0.4s ease;
+}
+
+.logo:hover h1::after {
+    width: 100%;
 }
 
 .logo p {
     font-size: var(--font-size-sm);
     opacity: 0.9;
-    font-weight: 300;
+    font-weight: 400;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.logo:hover p {
+    opacity: 1;
+    transform: translateX(3px);
 }
 
 .company-selector {
     flex-shrink: 0;
+    position: relative;
 }
 
 .company-select {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     color: white;
-    padding: var(--spacing-2) var(--spacing-4);
-    border-radius: var(--radius-md);
+    padding: var(--spacing-3) var(--spacing-5);
+    border-radius: var(--radius-lg);
     font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 180px;
+    backdrop-filter: blur(20px);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.company-select::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.6s ease;
 }
 
 .company-select:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.company-select:hover::before {
+    left: 100%;
 }
 
 .company-select:focus {
     outline: none;
-    box-shadow: 0 0 0 2px var(--secondary-color);
+    border-color: var(--secondary-color);
+    box-shadow: 
+        0 0 0 4px rgba(255, 255, 255, 0.2),
+        0 8px 24px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .company-select option {
-    background: var(--primary-color);
+    background: var(--primary-color-dark);
     color: white;
+    padding: var(--spacing-2);
+    border: none;
 }
 
 .nav {
     display: flex;
-    gap: var(--spacing-3);
+    gap: var(--spacing-4);
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* ===== BUTTON STYLES ===== */
@@ -231,63 +380,166 @@ body {
     gap: var(--spacing-2);
     padding: var(--spacing-3) var(--spacing-5);
     font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-weight: 600;
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
     white-space: nowrap;
     min-height: 44px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
 }
 
 .btn-primary {
-    background: var(--secondary-color);
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-color-light) 100%);
     color: var(--primary-color-dark);
-    border: 1px solid var(--secondary-color);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    animation: subtle-pulse 4s ease-in-out infinite;
 }
 
 .btn-primary:hover {
-    background: var(--secondary-color-light);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    background: linear-gradient(135deg, var(--secondary-color-light) 0%, var(--secondary-color) 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .btn-outline {
-    background: transparent;
-    color: var(--primary-color);
-    border: 1px solid var(--primary-color);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .btn-outline:hover {
-    background: var(--primary-color);
-    color: white;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .btn-danger {
-    background: var(--status-followup);
+    background: linear-gradient(135deg, var(--status-followup) 0%, #dc2626 100%);
     color: white;
-    border: 1px solid var(--status-followup);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 4px 16px rgba(239, 68, 68, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .btn-danger:hover {
-    background: #dc2626;
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, #dc2626 0%, var(--status-followup) 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 24px rgba(239, 68, 68, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Enhanced button animations for header */
+.header .btn {
+    position: relative;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.header .btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.header .btn span {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--font-size-base);
+    margin-right: var(--spacing-1);
 }
 
 /* ===== MAIN CONTENT ===== */
 .main {
     padding: var(--spacing-8) 0;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        transparent 100%
+    );
+    position: relative;
+    min-height: 80vh;
+}
+
+.main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--primary-color) 50%,
+        transparent 100%
+    );
+    opacity: 0.3;
+}
+
+.main::after {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(var(--primary-color), 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: mainGlow 8s ease-in-out infinite;
+    pointer-events: none;
 }
 
 /* ===== STATISTICS SECTION ===== */
@@ -925,11 +1177,6 @@ body {
     margin-bottom: var(--spacing-4);
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 .loading-overlay p {
     color: var(--gray-600);
     font-weight: 500;
@@ -1442,3 +1689,15 @@ body {
         width: 100%;
     }
 }
+
+/* ===== END OF STYLES ===== */
+/* CSS has been organized in logical order:
+   1. Variables & Custom Properties
+   2. Theme System
+   3. Keyframes & Animations
+   4. Global Styles
+   5. Layout Components (Header, Main, Footer)
+   6. UI Components (Buttons, Forms, Modals)
+   7. Content Sections (Stats, Controls, Jobs)
+   8. Responsive Design
+*/

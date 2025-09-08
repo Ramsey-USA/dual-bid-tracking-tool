@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connection Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #f8fafc;
+        }
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        .status {
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        .success { background: #ecfdf5; color: #065f46; border: 1px solid #d1fae5; }
+        .error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .info { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        button:hover { background: #2563eb; }
+        pre { background: #f3f4f6; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>🔥 Firebase Connection Test</h1>
+        <p>This page tests the Firebase connection and database operations.</p>
+        
+        <div id="status"></div>
+        
+        <h3>Test Operations</h3>
+        <button onclick="testConnection()">Test Firebase Connection</button>
+        <button onclick="testAddJob()">Test Add Job</button>
+        <button onclick="testGetJobs()">Test Get Jobs</button>
+        <button onclick="testAddEstimator()">Test Add Estimator</button>
+        <button onclick="testGetEstimators()">Test Get Estimators</button>
+        
+        <h3>Test Results</h3>
+        <div id="results"></div>
+        
+        <p><a href="/">← Back to Main App</a> | <a href="/admin.html">Admin Panel →</a></p>
+    </div>
+
+    <script type="module">
+        import { dbService } from './js/database-service-clean.js';
+
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showResult(title, data) {
+            const results = document.getElementById('results');
+            results.innerHTML += `
+                <h4>${title}</h4>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        }
+
+        window.testConnection = async function() {
+            try {
+                showStatus('🔥 Testing Firebase connection...', 'info');
+                
+                // Try a simple read operation
+                const jobs = await dbService.getJobsByCompany('test');
+                
+                showStatus('✅ Firebase connection successful!', 'success');
+                showResult('Connection Test', { 
+                    status: 'connected', 
+                    message: 'Firebase emulator is running and accessible',
+                    jobsFound: jobs.length 
+                });
+            } catch (error) {
+                showStatus(`❌ Firebase connection failed: ${error.message}`, 'error');
+                showResult('Connection Error', { error: error.message, stack: error.stack });
+            }
+        };
+
+        window.testAddJob = async function() {
+            try {
+                showStatus('📝 Testing add job...', 'info');
+                
+                const testJob = {
+                    title: 'Test Job ' + Date.now(),
+                    client: 'Test Client',
+                    location: 'Test Location',
+                    estimator: 'Test Estimator',
+                    deadline: new Date(),
+                    bidValue: 100000,
+                    status: 'in-progress',
+                    notes: 'This is a test job created from the test page',
+                    company: 'test'
+                };
+                
+                const jobId = await dbService.addJob(testJob);
+                
+                showStatus('✅ Job added successfully!', 'success');
+                showResult('Add Job Test', { jobId, testJob });
+            } catch (error) {
+                showStatus(`❌ Add job failed: ${error.message}`, 'error');
+                showResult('Add Job Error', { error: error.message });
+            }
+        };
+
+        window.testGetJobs = async function() {
+            try {
+                showStatus('📊 Testing get jobs...', 'info');
+                
+                const jobs = await dbService.getJobsByCompany('test');
+                
+                showStatus(`✅ Retrieved ${jobs.length} jobs!`, 'success');
+                showResult('Get Jobs Test', jobs);
+            } catch (error) {
+                showStatus(`❌ Get jobs failed: ${error.message}`, 'error');
+                showResult('Get Jobs Error', { error: error.message });
+            }
+        };
+
+        window.testAddEstimator = async function() {
+            try {
+                showStatus('👥 Testing add estimator...', 'info');
+                
+                const testEstimator = {
+                    name: 'Test Estimator ' + Date.now(),
+                    company: 'test'
+                };
+                
+                const estimatorId = await dbService.addEstimator(testEstimator);
+                
+                showStatus('✅ Estimator added successfully!', 'success');
+                showResult('Add Estimator Test', { estimatorId, testEstimator });
+            } catch (error) {
+                showStatus(`❌ Add estimator failed: ${error.message}`, 'error');
+                showResult('Add Estimator Error', { error: error.message });
+            }
+        };
+
+        window.testGetEstimators = async function() {
+            try {
+                showStatus('👥 Testing get estimators...', 'info');
+                
+                const estimators = await dbService.getEstimatorsByCompany('test');
+                
+                showStatus(`✅ Retrieved ${estimators.length} estimators!`, 'success');
+                showResult('Get Estimators Test', estimators);
+            } catch (error) {
+                showStatus(`❌ Get estimators failed: ${error.message}`, 'error');
+                showResult('Get Estimators Error', { error: error.message });
+            }
+        };
+
+        // Auto-test connection on load
+        document.addEventListener('DOMContentLoaded', () => {
+            showStatus('🔄 Loading test page...', 'info');
+            setTimeout(testConnection, 1000);
+        });
+    </script>
+</body>
+</html>

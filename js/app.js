@@ -1,1046 +1,1424 @@
-/**
- * MH Constructi        // Company configurations
-        this.companies = {
-            mhc: {
-                name: 'MH Construction',
-                subtitle: 'Professional Construction Services',
-                theme: 'mhc-theme',
-                icon: '🪖',
-                estimators: ['John Smith', 'Sarah Johnson', 'Mike Wilson', 'Lisa Chen'],
-                tagline: 'Building Excellence Since 2010',
-                phone: '(555) 123-4567',
-                email: 'info@mhconstruction.com',
-                location: 'Phoenix, AZ'
-            },
-            hdd: {
-                name: 'High Desert Drywall',
-                subtitle: 'Precision Drywall Solutions',
-                theme: 'hdd-theme',
-                icon: '🪜',
-                estimators: ['David Rodriguez', 'Emily Thompson', 'James Martinez', 'Anna Foster'],
-                tagline: 'Precision Finishes Since 2015',
-                phone: '(555) 987-6543',
-                email: 'info@highdesertdrywall.com',
-                location: 'Mesa, AZ'
-            }
-        };Drywall - Job Bidding Dashboard
- * Dual-company construction project management application
- * 
- * Features:
- * - Dual company support with automatic theme switching
- * - Real-time search and filtering
- * - Data export (CSV/PDF)
- * - Responsive design
- * - Local data persistence with company separation
- */
+// Dual Bid Tracking App with Firebase Integration
+import { dbService } from './database-service.js';
 
-class JobBiddingDashboard {
+class BidTrackingApp {
     constructor() {
-        this.jobs = [];
-        this.filteredJobs = [];
-        this.currentCompany = 'mhc'; // Default to MH Construction
+        this.currentCompany = localStorage.getItem('currentCompany') || 'mhc';
         this.currentView = 'table';
-        this.editingJobId = null;
+        this.jobs = [];
+        this.estimators = [];
+        this.stats = {};
+        this.unsubscribeJobs = null;
         
-        // Company configurations
-        this.companies = {
-            mhc: {
-                name: 'MH Construction',
-                subtitle: 'Professional Construction Services',
-                theme: 'mhc-theme',
-                icon: '🪖',
-                estimators: ['John Smith', 'Sarah Johnson', 'Mike Wilson', 'Lisa Chen']
-            },
-            hdd: {
-                name: 'High Desert Drywall',
-                subtitle: 'Precision Drywall Solutions',
-                theme: 'hdd-theme',
-                icon: '�️',
-                estimators: ['David Rodriguez', 'Emily Thompson', 'James Martinez', 'Anna Foster']
-            }
+        this.init();
+    }
+
+    async init() {
+        try {
+            console.log('🚀 Initializing Dual Bid Tracking App with Firebase...');
+            
+            this.setupEventListeners();
+            this.setCompanyTheme();
+            
+            // Load initial data from Firebase
+            await this.loadInitialData();
+            this.subscribeToJobUpdates();
+            this.renderPage();
+            
+            console.log('✅ App initialized successfully with Firebase');
+            this.showNotification('Connected to Firebase database', 'success');
+        } catch (error) {
+            console.error('❌ Error initializing app:', error);
+            this.showNotification('Error connecting to Firebase. Please check your configuration.', 'error');
+        }
+    }
+
+    async loadInitialData() {
+        try {
+            this.showLoading('Loading data from Firebase...');
+            
+            // Load jobs and estimators in parallel
+            const [jobs, estimators] = await Promise.all([
+                dbService.getJobsByCompany(this.currentCompany),
+                dbService.getEstimatorsByCompany(this.currentCompany)
+            ]);
+            
+            this.jobs = jobs;
+            this.estimators = estimators;
+            
+            // Calculate statistics
+            this.stats = await dbService.getJobStatistics(this.currentCompany);
+            
+            this.hideLoading();
+            console.log(`📊 Loaded ${jobs.length} jobs and ${estimators.length} estimators for ${this.getCompanyName(this.currentCompany)}`);
+        } catch (error) {
+            this.hideLoading();
+            console.error('Error loading initial data:', error);
+            this.showNotification('Error loading data from Firebase. Please check your connection.', 'error');
+            throw error;
+        }
+    }
+
+    loadMockData() {
+        console.log('📊 Loading mock data for demonstration...');
+        
+        // Mock statistics
+        this.stats = {
+            total: 12,
+            inProgress: 5,
+            submitted: 4,
+            followUp: 2,
+            overdue: 1,
+            won: 3,
+            lost: 0,
+            noBid: 0,
+            totalValue: 2450000,
+            wonValue: 890000,
+            pendingValue: 1560000
         };
-        
-        this.initializeApp();
-        this.loadSampleData();
+
+        // Mock jobs
+        this.jobs = [
+            {
+                id: '1',
+                title: 'Downtown Office Complex',
+                client: 'ABC Development',
+                location: 'Phoenix, AZ',
+                estimator: 'John Smith',
+                deadline: new Date('2024-01-15'),
+                bidValue: 850000,
+                status: 'in-progress',
+                notes: 'Large commercial project',
+                company: this.currentCompany,
+                createdAt: new Date('2024-01-01')
+            },
+            {
+                id: '2',
+                title: 'Residential Subdivision',
+                client: 'XYZ Homes',
+                location: 'Scottsdale, AZ',
+                estimator: 'Jane Doe',
+                deadline: new Date('2024-01-20'),
+                bidValue: 1200000,
+                status: 'submitted',
+                notes: 'Multi-family housing project',
+                company: this.currentCompany,
+                createdAt: new Date('2024-01-02')
+            },
+            {
+                id: '3',
+                title: 'Shopping Center Renovation',
+                client: 'Retail Partners LLC',
+                location: 'Tempe, AZ',
+                estimator: 'Mike Johnson',
+                deadline: new Date('2024-01-10'),
+                bidValue: 400000,
+                status: 'follow-up-required',
+                notes: 'Requires additional information',
+                company: this.currentCompany,
+                createdAt: new Date('2024-01-03')
+            }
+        ];
+
+        // Mock estimators
+        this.estimators = [
+            { id: '1', name: 'John Smith', company: this.currentCompany },
+            { id: '2', name: 'Jane Doe', company: this.currentCompany },
+            { id: '3', name: 'Mike Johnson', company: this.currentCompany }
+        ];
+
+        this.showNotification('Demo mode: Using sample data', 'info');
     }
-    
-    initializeApp() {
-        this.loadStoredData();
-        this.bindEvents();
-        this.updateCompanyTheme();
-        this.updateEstimatorOptions();
-        this.renderDashboard();
-        this.updateStats();
-    }
-    
-    loadStoredData() {
-        // Load stored company preference
-        const storedCompany = localStorage.getItem('selectedCompany');
-        if (storedCompany && this.companies[storedCompany]) {
-            this.currentCompany = storedCompany;
-            document.getElementById('company-select').value = storedCompany;
+
+    subscribeToJobUpdates() {
+        if (!this.firebaseLoaded) return;
+
+        // Unsubscribe from previous subscription if exists
+        if (this.unsubscribeJobs) {
+            this.unsubscribeJobs();
         }
-        
-        // Load stored jobs
-        const storedJobs = localStorage.getItem('constructionJobs');
-        if (storedJobs) {
-            this.jobs = JSON.parse(storedJobs);
-        }
-        
-        this.applyFilters();
+
+        // Subscribe to real-time job updates
+        this.unsubscribeJobs = this.dbService.subscribeToJobs(this.currentCompany, (jobs) => {
+            this.jobs = jobs;
+            this.updateStatistics();
+            this.renderJobs();
+            this.renderStats();
+        });
     }
-    
-    saveData() {
-        localStorage.setItem('constructionJobs', JSON.stringify(this.jobs));
-        localStorage.setItem('selectedCompany', this.currentCompany);
-    }
-    
-    loadSampleData() {
-        // Only load sample data if no jobs exist
-        if (this.jobs.length === 0) {
-            this.jobs = [
-                {
-                    id: this.generateId(),
-                    projectName: 'Downtown Office Complex',
-                    client: 'Metro Development Corp',
-                    location: 'Phoenix, AZ',
-                    estimator: 'John Smith',
-                    deadline: '2025-01-15',
-                    followUpDate: '2025-01-12',
-                    status: 'In Progress',
-                    description: 'Large-scale commercial office building with underground parking and retail space.',
-                    estimatingCost: 45000,
-                    bidAmount: 2500000,
-                    bondAmount: 125000,
-                    company: 'mhc',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: this.generateId(),
-                    projectName: 'Residential Subdivision Phase 2',
-                    client: 'Desert Homes LLC',
-                    location: 'Scottsdale, AZ',
-                    estimator: 'Sarah Johnson',
-                    deadline: '2025-01-20',
-                    followUpDate: '2025-01-25',
-                    status: 'Submitted',
-                    description: '45 single-family homes with community amenities and landscaping.',
-                    estimatingCost: 35000,
-                    bidAmount: 1800000,
-                    bondAmount: 90000,
-                    company: 'mhc',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: this.generateId(),
-                    projectName: 'Highway 101 Bridge Repair',
-                    client: 'Arizona Department of Transportation',
-                    location: 'Tempe, AZ',
-                    estimator: 'Mike Wilson',
-                    deadline: '2025-01-10',
-                    followUpDate: '2025-01-13',
-                    status: 'Follow-up Required',
-                    description: 'Infrastructure repair and reinforcement of aging bridge structure.',
-                    estimatingCost: 25000,
-                    bidAmount: 850000,
-                    bondAmount: 42500,
-                    company: 'mhc',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: this.generateId(),
-                    projectName: 'Commercial Drywall Installation',
-                    client: 'Valley Business Center',
-                    location: 'Mesa, AZ',
-                    estimator: 'David Rodriguez',
-                    deadline: '2025-01-18',
-                    followUpDate: '2025-01-22',
-                    status: 'In Progress',
-                    description: 'Complete drywall installation for 50,000 sq ft office complex.',
-                    estimatingCost: 8000,
-                    bidAmount: 125000,
-                    bondAmount: 6250,
-                    company: 'hdd',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: this.generateId(),
-                    projectName: 'Luxury Home Drywall Package',
-                    client: 'Pinnacle Custom Homes',
-                    location: 'Paradise Valley, AZ',
-                    estimator: 'Emily Thompson',
-                    deadline: '2025-01-25',
-                    followUpDate: '2025-01-30',
-                    status: 'Submitted',
-                    description: 'High-end residential drywall with custom textures and specialty finishes.',
-                    estimatingCost: 5000,
-                    bidAmount: 75000,
-                    bondAmount: 3750,
-                    company: 'hdd',
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            this.saveData();
-            this.applyFilters();
+
+    async updateStatistics() {
+        if (!this.firebaseLoaded) return;
+        
+        try {
+            this.stats = await this.dbService.getJobStatistics(this.currentCompany);
+        } catch (error) {
+            console.error('Error updating statistics:', error);
         }
     }
-    
-    bindEvents() {
+
+    setupEventListeners() {
         // Company selector
-        document.getElementById('company-select').addEventListener('change', (e) => {
-            this.setCompany(e.target.value);
-        });
+        const companySelect = document.getElementById('company-select');
+        if (companySelect) {
+            companySelect.value = this.currentCompany;
+            companySelect.addEventListener('change', (e) => {
+                this.switchCompany(e.target.value);
+            });
+        }
+
+        // Add job button
+        const addJobBtn = document.getElementById('add-job-btn');
+        if (addJobBtn) {
+            addJobBtn.addEventListener('click', () => {
+                this.showAddJobModal();
+            });
+        }
+
+        // Export button
+        const exportBtn = document.getElementById('export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.showExportModal();
+            });
+        }
+
+        // Manage estimators button
+        const manageEstimatorsBtn = document.getElementById('manage-estimators-btn');
+        if (manageEstimatorsBtn) {
+            manageEstimatorsBtn.addEventListener('click', () => {
+                this.showEstimatorsModal();
+            });
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', this.debounce((e) => {
+                this.handleSearch(e.target.value);
+            }, 300));
+        }
+
+        // Clear search button
+        const clearSearchBtn = document.getElementById('clear-search');
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                this.renderJobs();
+            });
+        }
+
+        // View toggle buttons
+        const tableViewBtn = document.getElementById('table-view-btn');
+        const cardViewBtn = document.getElementById('card-view-btn');
         
-        // Navigation buttons
-        document.getElementById('manage-estimators-btn').addEventListener('click', () => {
-            this.openEstimatorsModal();
-        });
+        if (tableViewBtn) {
+            tableViewBtn.addEventListener('click', () => {
+                this.switchView('table');
+            });
+        }
         
-        document.getElementById('add-job-btn').addEventListener('click', () => {
-            this.openJobModal();
-        });
+        if (cardViewBtn) {
+            cardViewBtn.addEventListener('click', () => {
+                this.switchView('card');
+            });
+        }
+
+        // Filter selects
+        const statusFilter = document.getElementById('status-filter');
+        const estimatorFilter = document.getElementById('estimator-filter');
         
-        document.getElementById('export-btn').addEventListener('click', () => {
-            this.openExportModal();
-        });
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => {
+                this.applyFilters();
+            });
+        }
         
-        // Search and filters
-        document.getElementById('search-input').addEventListener('input', () => {
-            this.applyFilters();
-        });
-        
-        document.getElementById('clear-search').addEventListener('click', () => {
-            document.getElementById('search-input').value = '';
-            this.applyFilters();
-        });
-        
-        document.getElementById('status-filter').addEventListener('change', () => {
-            this.applyFilters();
-        });
-        
-        document.getElementById('estimator-filter').addEventListener('change', () => {
-            this.applyFilters();
-        });
-        
-        document.getElementById('clear-filters').addEventListener('click', () => {
-            this.clearFilters();
-        });
-        
-        // View toggle
-        document.getElementById('table-view').addEventListener('click', () => {
-            this.setView('table');
-        });
-        
-        document.getElementById('card-view').addEventListener('click', () => {
-            this.setView('card');
-        });
-        
-        // Modal events
-        document.getElementById('close-modal').addEventListener('click', () => {
-            this.closeJobModal();
-        });
-        
-        document.getElementById('cancel-btn').addEventListener('click', () => {
-            this.closeJobModal();
-        });
-        
-        document.getElementById('job-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveJob();
-        });
-        
-        // Export modal events
-        document.getElementById('close-export-modal').addEventListener('click', () => {
-            this.closeExportModal();
-        });
-        
-        document.getElementById('cancel-export').addEventListener('click', () => {
-            this.closeExportModal();
-        });
-        
-        document.getElementById('confirm-export').addEventListener('click', () => {
-            this.exportData();
-        });
-        
-        // Estimators modal events
-        document.getElementById('close-estimators-modal').addEventListener('click', () => {
-            this.closeEstimatorsModal();
-        });
-        
-        document.getElementById('cancel-estimators').addEventListener('click', () => {
-            this.closeEstimatorsModal();
-        });
-        
-        document.getElementById('save-estimators').addEventListener('click', () => {
-            this.saveEstimators();
-        });
-        
-        document.getElementById('add-estimator-btn').addEventListener('click', () => {
-            this.addEstimator();
-        });
-        
-        document.getElementById('new-estimator-name').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.addEstimator();
+        if (estimatorFilter) {
+            estimatorFilter.addEventListener('change', () => {
+                this.applyFilters();
+            });
+        }
+
+        // Modal close handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.hideModal();
+            }
+            if (e.target.classList.contains('close-btn')) {
+                this.hideModal();
             }
         });
-        
-        // Close modals on backdrop click
-        document.getElementById('job-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'job-modal') {
-                this.closeJobModal();
+
+        // Form submission handlers
+        const jobForm = document.getElementById('job-form');
+        if (jobForm) {
+            jobForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleJobSubmit(e);
+            });
+        }
+
+        console.log('🎯 Event listeners set up');
+    }
+
+    async switchCompany(companyId) {
+        try {
+            this.currentCompany = companyId;
+            localStorage.setItem('currentCompany', companyId);
+            
+            this.setCompanyTheme();
+            
+            if (this.firebaseLoaded) {
+                await this.loadInitialData();
+                this.subscribeToJobUpdates();
+            } else {
+                this.loadMockData();
             }
-        });
-        
-        document.getElementById('export-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'export-modal') {
-                this.closeExportModal();
-            }
-        });
-        
-        document.getElementById('estimators-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'estimators-modal') {
-                this.closeEstimatorsModal();
-            }
-        });
-    }
-    
-    setCompany(companyCode) {
-        if (!this.companies[companyCode]) return;
-        
-        this.currentCompany = companyCode;
-        this.updateCompanyTheme();
-        this.updateEstimatorOptions();
-        this.applyFilters();
-        this.saveData();
-    }
-    
-    updateCompanyTheme() {
-        const company = this.companies[this.currentCompany];
-        
-        // Update body theme class
-        document.body.className = company.theme;
-        
-        // Update header text and icon
-        document.getElementById('company-title').textContent = company.name;
-        document.getElementById('company-subtitle').textContent = company.subtitle;
-        document.getElementById('company-icon').textContent = company.icon;
-        
-        // Update footer content
-        document.getElementById('footer-icon').textContent = company.icon;
-        document.getElementById('footer-company-name').textContent = company.name;
-        document.getElementById('footer-company-tagline').textContent = company.tagline;
-        document.getElementById('footer-phone').textContent = company.phone;
-        document.getElementById('footer-email').textContent = company.email;
-        document.getElementById('footer-location').textContent = company.location;
-        document.getElementById('footer-copyright-company').textContent = company.name;
-        
-        // Update export modal label
-        document.getElementById('export-all-label').textContent = `All ${company.name} Jobs`;
-    }
-    
-    updateEstimatorOptions() {
-        const estimators = this.companies[this.currentCompany].estimators;
-        
-        // Update modal estimator dropdown
-        const modalEstimatorSelect = document.getElementById('estimator');
-        modalEstimatorSelect.innerHTML = '<option value="">Select Estimator</option>';
-        estimators.forEach(estimator => {
-            const option = document.createElement('option');
-            option.value = estimator;
-            option.textContent = estimator;
-            modalEstimatorSelect.appendChild(option);
-        });
-        
-        // Update filter estimator dropdown
-        const filterEstimatorSelect = document.getElementById('estimator-filter');
-        filterEstimatorSelect.innerHTML = '<option value="">All Estimators</option>';
-        estimators.forEach(estimator => {
-            const option = document.createElement('option');
-            option.value = estimator;
-            option.textContent = estimator;
-            filterEstimatorSelect.appendChild(option);
-        });
-    }
-    
-    applyFilters() {
-        const searchTerm = document.getElementById('search-input').value.toLowerCase();
-        const statusFilter = document.getElementById('status-filter').value;
-        const estimatorFilter = document.getElementById('estimator-filter').value;
-        
-        this.filteredJobs = this.jobs.filter(job => {
-            // Filter by company first
-            if (job.company !== this.currentCompany) return false;
             
-            // Apply search filter
-            const matchesSearch = !searchTerm || 
-                job.projectName.toLowerCase().includes(searchTerm) ||
-                job.client.toLowerCase().includes(searchTerm) ||
-                job.location.toLowerCase().includes(searchTerm);
+            this.renderPage();
             
-            // Apply status filter
-            const matchesStatus = !statusFilter || job.status === statusFilter;
-            
-            // Apply estimator filter
-            const matchesEstimator = !estimatorFilter || job.estimator === estimatorFilter;
-            
-            return matchesSearch && matchesStatus && matchesEstimator;
-        });
-        
-        this.renderDashboard();
-        this.updateStats();
+            this.showNotification(`Switched to ${this.getCompanyName(companyId)}`, 'success');
+        } catch (error) {
+            console.error('Error switching company:', error);
+            this.showNotification('Error switching company', 'error');
+        }
     }
-    
-    clearFilters() {
-        document.getElementById('search-input').value = '';
-        document.getElementById('status-filter').value = '';
-        document.getElementById('estimator-filter').value = '';
-        this.applyFilters();
-    }
-    
-    setView(viewType) {
-        this.currentView = viewType;
+
+    switchView(view) {
+        this.currentView = view;
         
-        // Update button states
+        // Update active button
         document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`${viewType}-view`).classList.add('active');
+        document.getElementById(`${view}-view-btn`)?.classList.add('active');
         
-        // Show/hide containers
-        document.getElementById('table-container').style.display = viewType === 'table' ? 'block' : 'none';
-        document.getElementById('card-container').style.display = viewType === 'card' ? 'block' : 'none';
+        // Show/hide appropriate containers
+        const tableContainer = document.querySelector('.table-container');
+        const cardContainer = document.querySelector('.card-container');
         
-        this.renderDashboard();
+        if (view === 'table') {
+            if (tableContainer) tableContainer.style.display = 'block';
+            if (cardContainer) cardContainer.style.display = 'none';
+        } else {
+            if (tableContainer) tableContainer.style.display = 'none';
+            if (cardContainer) cardContainer.style.display = 'block';
+        }
+        
+        this.renderJobs();
     }
-    
-    renderDashboard() {
-        if (this.filteredJobs.length === 0) {
-            this.showEmptyState();
+
+    handleSearch(searchTerm) {
+        if (!searchTerm.trim()) {
+            this.renderJobs();
+            return;
+        }
+
+        const filteredJobs = this.jobs.filter(job => 
+            job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            job.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            job.location?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        
+        this.renderJobs(filteredJobs);
+    }
+
+    applyFilters() {
+        const statusFilter = document.getElementById('status-filter')?.value;
+        const estimatorFilter = document.getElementById('estimator-filter')?.value;
+        
+        let filteredJobs = [...this.jobs];
+        
+        if (statusFilter && statusFilter !== 'all') {
+            filteredJobs = filteredJobs.filter(job => job.status === statusFilter);
+        }
+        
+        if (estimatorFilter && estimatorFilter !== 'all') {
+            filteredJobs = filteredJobs.filter(job => job.estimator === estimatorFilter);
+        }
+        
+        this.renderJobs(filteredJobs);
+    }
+
+    async handleJobSubmit(event) {
+        if (!this.firebaseLoaded) {
+            this.showNotification('Demo mode: Job would be saved to Firebase', 'info');
+            this.hideModal();
             return;
         }
         
-        this.hideEmptyState();
-        
-        if (this.currentView === 'table') {
-            this.renderTableView();
-        } else {
-            this.renderCardView();
+        try {
+            this.showLoading('Saving job...');
+            
+            const formData = new FormData(event.target);
+            const jobData = {
+                title: formData.get('title'),
+                client: formData.get('client'),
+                location: formData.get('location'),
+                estimator: formData.get('estimator'),
+                deadline: new Date(formData.get('deadline')),
+                bidValue: parseFloat(formData.get('bidValue')) || 0,
+                status: formData.get('status'),
+                notes: formData.get('notes') || '',
+                company: this.currentCompany
+            };
+
+            const jobId = event.target.dataset.jobId;
+            
+            if (jobId) {
+                await this.dbService.updateJob(jobId, jobData);
+                this.showNotification('Job updated successfully!', 'success');
+            } else {
+                await this.dbService.addJob(jobData);
+                this.showNotification('Job added successfully!', 'success');
+            }
+            
+            this.hideModal();
+            this.hideLoading();
+            
+        } catch (error) {
+            this.hideLoading();
+            console.error('Error saving job:', error);
+            this.showNotification('Error saving job. Please try again.', 'error');
         }
     }
+
+    // ...existing utility methods...
     
-    renderTableView() {
-        const tbody = document.getElementById('jobs-table-body');
-        tbody.innerHTML = '';
+    renderPage() {
+        this.renderStats();
+        this.renderEstimatorFilter();
+        this.renderJobs();
+        this.updateCompanyInfo();
+    }
+
+    renderStats() {
+        this.updateStatCard('total-jobs', this.stats.total || 0);
+        this.updateStatCard('in-progress', this.stats.inProgress || 0);
+        this.updateStatCard('submitted', this.stats.submitted || 0);
+        this.updateStatCard('follow-up', this.stats.followUp || 0);
+        this.updateStatCard('overdue', this.stats.overdue || 0);
+        this.updateStatCard('won', this.stats.won || 0);
         
-        this.filteredJobs.forEach(job => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>
-                    <div class="job-title">${this.escapeHtml(job.projectName)}</div>
-                </td>
+        this.updateBidValueCard();
+    }
+
+    updateStatCard(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    updateBidValueCard() {
+        const totalValueEl = document.getElementById('total-bid-value');
+        const wonValueEl = document.getElementById('won-value');
+        const pendingValueEl = document.getElementById('pending-value');
+        
+        if (totalValueEl) totalValueEl.textContent = this.formatCurrency(this.stats.totalValue || 0);
+        if (wonValueEl) wonValueEl.textContent = this.formatCurrency(this.stats.wonValue || 0);
+        if (pendingValueEl) pendingValueEl.textContent = this.formatCurrency(this.stats.pendingValue || 0);
+    }
+
+    renderJobs(jobsToRender = this.jobs) {
+        if (this.currentView === 'table') {
+            this.renderTableView(jobsToRender);
+        } else {
+            this.renderCardView(jobsToRender);
+        }
+    }
+
+    renderTableView(jobs) {
+        const tbody = document.querySelector('.jobs-table tbody');
+        if (!tbody) return;
+
+        if (jobs.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center" style="padding: 2rem; color: #6b7280; font-style: italic;">
+                        No jobs found. <a href="#" onclick="app.showAddJobModal()" style="color: var(--primary-color);">Add your first job</a>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = jobs.map(job => `
+            <tr>
+                <td class="job-title">${this.escapeHtml(job.title)}</td>
+                <td>${this.escapeHtml(job.client)}</td>
+                <td>${this.escapeHtml(job.location || 'N/A')}</td>
+                <td>${this.escapeHtml(job.estimator || 'Unassigned')}</td>
                 <td>
                     <div class="deadline">
-                        <div class="deadline-date">${this.formatDate(job.deadline)}</div>
-                        <div class="deadline-countdown ${this.getDeadlineClass(job.deadline)}">${this.getDeadlineText(job.deadline)}</div>
+                        <span class="deadline-date">${this.formatDate(job.deadline)}</span>
+                        <span class="deadline-countdown ${this.getDeadlineClass(job.deadline)}">
+                            ${this.getDeadlineText(job.deadline)}
+                        </span>
                     </div>
                 </td>
                 <td>
-                    ${job.followUpDate ? `
-                        <div class="deadline">
-                            <div class="deadline-date">${this.formatDate(job.followUpDate)}</div>
-                        </div>
-                    ` : '<span class="text-muted">—</span>'}
-                </td>
-                <td>${this.formatCurrency(job.estimatingCost || 0)}</td>
-                <td>${this.formatCurrency(job.bidAmount || 0)}</td>
-                <td>${this.formatCurrency(job.bondAmount || 0)}</td>
-                <td>
-                    <span class="status-badge ${this.getStatusClass(job.status)}">${job.status}</span>
+                    <span class="status-badge ${job.status}">${this.formatStatus(job.status)}</span>
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <button class="action-btn edit" onclick="dashboard.editJob('${job.id}')" title="Edit Job">✏️</button>
-                        <button class="action-btn delete" onclick="dashboard.deleteJob('${job.id}')" title="Delete Job">🗑️</button>
+                        <button class="action-btn edit" onclick="app.editJob('${job.id}')" title="Edit">
+                            ✏️
+                        </button>
+                        <button class="action-btn delete" onclick="app.handleJobDelete('${job.id}')" title="Delete">
+                            🗑️
+                        </button>
                     </div>
                 </td>
-            `;
-            tbody.appendChild(row);
-        });
+            </tr>
+        `).join('');
     }
-    
-    renderCardView() {
-        const container = document.getElementById('jobs-card-container');
-        container.innerHTML = '';
-        
-        this.filteredJobs.forEach(job => {
-            const card = document.createElement('div');
-            card.className = 'job-card';
-            card.innerHTML = `
+
+    renderCardView(jobs) {
+        const container = document.querySelector('.jobs-grid');
+        if (!container) return;
+
+        if (jobs.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-content">
+                        <h3>No jobs found</h3>
+                        <p>Get started by adding your first job</p>
+                        <button class="btn btn-primary" onclick="app.showAddJobModal()">
+                            <span>📝</span> Add Job
+                        </button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = jobs.map(job => `
+            <div class="job-card">
                 <div class="job-card-header">
-                    <h3 class="job-card-title">${this.escapeHtml(job.projectName)}</h3>
+                    <h3 class="job-card-title">${this.escapeHtml(job.title)}</h3>
                     <p class="job-card-client">${this.escapeHtml(job.client)}</p>
                 </div>
                 <div class="job-card-body">
                     <div class="job-card-detail">
                         <strong>Location:</strong>
-                        <span>${this.escapeHtml(job.location)}</span>
+                        <span>${this.escapeHtml(job.location || 'N/A')}</span>
                     </div>
                     <div class="job-card-detail">
                         <strong>Estimator:</strong>
-                        <span>${this.escapeHtml(job.estimator)}</span>
+                        <span>${this.escapeHtml(job.estimator || 'Unassigned')}</span>
                     </div>
                     <div class="job-card-detail">
                         <strong>Deadline:</strong>
-                        <span>${this.formatDate(job.deadline)} <small class="${this.getDeadlineClass(job.deadline)}">(${this.getDeadlineText(job.deadline)})</small></span>
-                    </div>
-                    ${job.followUpDate ? `
-                        <div class="job-card-detail">
-                            <strong>Follow-up Date:</strong>
-                            <span>${this.formatDate(job.followUpDate)}</span>
-                        </div>
-                    ` : ''}
-                    <div class="job-card-detail">
-                        <strong>Estimating Cost:</strong>
-                        <span>${this.formatCurrency(job.estimatingCost || 0)}</span>
+                        <span>${this.formatDate(job.deadline)}</span>
                     </div>
                     <div class="job-card-detail">
-                        <strong>Bid Amount:</strong>
-                        <span>${this.formatCurrency(job.bidAmount || 0)}</span>
-                    </div>
-                    <div class="job-card-detail">
-                        <strong>Bond Amount:</strong>
-                        <span>${this.formatCurrency(job.bondAmount || 0)}</span>
+                        <strong>Bid Value:</strong>
+                        <span>${this.formatCurrency(job.bidValue)}</span>
                     </div>
                     <div class="job-card-detail">
                         <strong>Status:</strong>
-                        <span class="status-badge ${this.getStatusClass(job.status)}">${job.status}</span>
+                        <span class="status-badge ${job.status}">${this.formatStatus(job.status)}</span>
                     </div>
-                    ${job.description ? `<div class="job-card-detail"><strong>Description:</strong><br><span>${this.escapeHtml(job.description)}</span></div>` : ''}
                 </div>
                 <div class="job-card-actions">
-                    <button class="btn btn-outline" onclick="dashboard.editJob('${job.id}')">✏️ Edit</button>
-                    <button class="btn btn-danger" onclick="dashboard.deleteJob('${job.id}')">🗑️ Delete</button>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
-    
-    showEmptyState() {
-        document.getElementById('table-container').style.display = 'none';
-        document.getElementById('card-container').style.display = 'none';
-        document.getElementById('empty-state').style.display = 'block';
-    }
-    
-    hideEmptyState() {
-        document.getElementById('empty-state').style.display = 'none';
-        document.getElementById('table-container').style.display = this.currentView === 'table' ? 'block' : 'none';
-        document.getElementById('card-container').style.display = this.currentView === 'card' ? 'block' : 'none';
-    }
-    
-    updateStats() {
-        // Get jobs for each company
-        const mhcJobs = this.jobs.filter(job => job.company === 'mhc');
-        const hddJobs = this.jobs.filter(job => job.company === 'hdd');
-        const allJobs = this.jobs;
-        
-        // Calculate totals
-        const mhcTotal = mhcJobs.length;
-        const hddTotal = hddJobs.length;
-        const totalJobs = allJobs.length;
-        
-        // Calculate in progress
-        const mhcProgress = mhcJobs.filter(job => job.status === 'In Progress').length;
-        const hddProgress = hddJobs.filter(job => job.status === 'In Progress').length;
-        const totalProgress = mhcProgress + hddProgress;
-        
-        // Calculate submitted
-        const mhcSubmitted = mhcJobs.filter(job => job.status === 'Submitted').length;
-        const hddSubmitted = hddJobs.filter(job => job.status === 'Submitted').length;
-        const totalSubmitted = mhcSubmitted + hddSubmitted;
-        
-        // Calculate follow-ups
-        const mhcFollowup = mhcJobs.filter(job => job.status === 'Follow-up Required').length;
-        const hddFollowup = hddJobs.filter(job => job.status === 'Follow-up Required').length;
-        const totalFollowup = mhcFollowup + hddFollowup;
-        
-        // Calculate overdue
-        const mhcOverdue = mhcJobs.filter(job => this.isOverdue(job.deadline)).length;
-        const hddOverdue = hddJobs.filter(job => this.isOverdue(job.deadline)).length;
-        const totalOverdue = mhcOverdue + hddOverdue;
-        
-        // Calculate won jobs
-        const mhcWon = mhcJobs.filter(job => job.status === 'Won').length;
-        const hddWon = hddJobs.filter(job => job.status === 'Won').length;
-        const totalWon = mhcWon + hddWon;
-        
-        // Calculate bid values
-        const mhcBidValue = mhcJobs.reduce((sum, job) => sum + (job.bidAmount || 0), 0);
-        const hddBidValue = hddJobs.reduce((sum, job) => sum + (job.bidAmount || 0), 0);
-        const totalBidValue = mhcBidValue + hddBidValue;
-        
-        // Update total jobs
-        document.getElementById('total-jobs').textContent = totalJobs;
-        document.getElementById('mhc-total').textContent = mhcTotal;
-        document.getElementById('hdd-total').textContent = hddTotal;
-        
-        // Update in progress
-        document.getElementById('in-progress-jobs').textContent = totalProgress;
-        document.getElementById('mhc-progress').textContent = mhcProgress;
-        document.getElementById('hdd-progress').textContent = hddProgress;
-        
-        // Update submitted
-        document.getElementById('submitted-jobs').textContent = totalSubmitted;
-        document.getElementById('mhc-submitted').textContent = mhcSubmitted;
-        document.getElementById('hdd-submitted').textContent = hddSubmitted;
-        
-        // Update follow-ups
-        document.getElementById('followup-jobs').textContent = totalFollowup;
-        document.getElementById('mhc-followup').textContent = mhcFollowup;
-        document.getElementById('hdd-followup').textContent = hddFollowup;
-        
-        // Update overdue
-        document.getElementById('overdue-jobs').textContent = totalOverdue;
-        document.getElementById('mhc-overdue').textContent = mhcOverdue;
-        document.getElementById('hdd-overdue').textContent = hddOverdue;
-        
-        // Update won jobs
-        document.getElementById('won-jobs').textContent = totalWon;
-        document.getElementById('mhc-won').textContent = mhcWon;
-        document.getElementById('hdd-won').textContent = hddWon;
-        
-        // Update bid values
-        document.getElementById('total-bid-value').textContent = this.formatCurrency(totalBidValue);
-        document.getElementById('mhc-bid-value').textContent = this.formatCurrency(mhcBidValue);
-        document.getElementById('hdd-bid-value').textContent = this.formatCurrency(hddBidValue);
-        
-        // Update footer stats
-        const currentCompanyJobs = this.jobs.filter(job => job.company === this.currentCompany);
-        const currentCompanyValue = currentCompanyJobs.reduce((sum, job) => sum + (job.bidAmount || 0), 0);
-        document.getElementById('footer-total-jobs').textContent = currentCompanyJobs.length;
-        document.getElementById('footer-total-value').textContent = this.formatCurrency(currentCompanyValue);
-    }
-    
-    openJobModal(job = null) {
-        this.editingJobId = job ? job.id : null;
-        const modal = document.getElementById('job-modal');
-        const form = document.getElementById('job-form');
-        
-        // Update modal title
-        document.getElementById('modal-title').textContent = job ? 'Edit Job' : 'Add New Job';
-        document.getElementById('submit-text').textContent = job ? 'Update Job' : 'Save Job';
-        
-        // Reset form
-        form.reset();
-        
-        // Populate form if editing
-        if (job) {
-            document.getElementById('project-name').value = job.projectName;
-            document.getElementById('client').value = job.client;
-            document.getElementById('location').value = job.location;
-            document.getElementById('estimator').value = job.estimator;
-            document.getElementById('deadline').value = job.deadline;
-            document.getElementById('follow-up-date').value = job.followUpDate || '';
-            document.getElementById('status').value = job.status;
-            document.getElementById('description').value = job.description || '';
-            document.getElementById('estimating-cost').value = job.estimatingCost || '';
-            document.getElementById('bid-amount').value = job.bidAmount || '';
-            document.getElementById('bond-amount').value = job.bondAmount || '';
-        }
-        
-        modal.style.display = 'flex';
-        document.getElementById('project-name').focus();
-    }
-    
-    closeJobModal() {
-        document.getElementById('job-modal').style.display = 'none';
-        this.editingJobId = null;
-    }
-    
-    saveJob() {
-        const formData = new FormData(document.getElementById('job-form'));
-        const jobData = {
-            projectName: formData.get('projectName').trim(),
-            client: formData.get('client').trim(),
-            location: formData.get('location').trim(),
-            estimator: formData.get('estimator'),
-            deadline: formData.get('deadline'),
-            followUpDate: formData.get('followUpDate') || null,
-            status: formData.get('status'),
-            description: formData.get('description').trim(),
-            estimatingCost: parseFloat(formData.get('estimatingCost')) || 0,
-            bidAmount: parseFloat(formData.get('bidAmount')) || 0,
-            bondAmount: parseFloat(formData.get('bondAmount')) || 0,
-            company: this.currentCompany
-        };
-        
-        // Validation
-        if (!jobData.projectName || !jobData.client || !jobData.location || 
-            !jobData.estimator || !jobData.deadline || !jobData.status) {
-            alert('Please fill in all required fields.');
-            return;
-        }
-        
-        if (this.editingJobId) {
-            // Update existing job
-            const jobIndex = this.jobs.findIndex(job => job.id === this.editingJobId);
-            if (jobIndex !== -1) {
-                this.jobs[jobIndex] = { ...this.jobs[jobIndex], ...jobData };
-            }
-        } else {
-            // Create new job
-            const newJob = {
-                id: this.generateId(),
-                ...jobData,
-                createdAt: new Date().toISOString()
-            };
-            this.jobs.push(newJob);
-        }
-        
-        this.saveData();
-        this.applyFilters();
-        this.closeJobModal();
-    }
-    
-    editJob(jobId) {
-        const job = this.jobs.find(job => job.id === jobId);
-        if (job) {
-            this.openJobModal(job);
-        }
-    }
-    
-    deleteJob(jobId) {
-        const job = this.jobs.find(job => job.id === jobId);
-        if (job && confirm(`Are you sure you want to delete "${job.projectName}"?`)) {
-            this.jobs = this.jobs.filter(job => job.id !== jobId);
-            this.saveData();
-            this.applyFilters();
-        }
-    }
-    
-    openExportModal() {
-        document.getElementById('export-modal').style.display = 'flex';
-    }
-    
-    closeExportModal() {
-        document.getElementById('export-modal').style.display = 'none';
-    }
-    
-    exportData() {
-        const format = document.querySelector('input[name="export-format"]:checked').value;
-        const scope = document.querySelector('input[name="export-scope"]:checked').value;
-        
-        const dataToExport = scope === 'filtered' ? this.filteredJobs : 
-            this.jobs.filter(job => job.company === this.currentCompany);
-        
-        this.showLoading();
-        
-        setTimeout(() => {
-            if (format === 'csv') {
-                this.exportToCSV(dataToExport);
-            } else {
-                this.exportToPDF(dataToExport);
-            }
-            this.hideLoading();
-            this.closeExportModal();
-        }, 1000);
-    }
-    
-    exportToCSV(jobs) {
-        const headers = ['Project Name', 'Client', 'Location', 'Estimator', 'Deadline', 'Follow-up Date', 'Status', 'Estimating Cost', 'Bid Amount', 'Bond Amount', 'Description', 'Company'];
-        const csvContent = [
-            headers.join(','),
-            ...jobs.map(job => [
-                `"${job.projectName}"`,
-                `"${job.client}"`,
-                `"${job.location}"`,
-                `"${job.estimator}"`,
-                job.deadline,
-                job.followUpDate || '',
-                `"${job.status}"`,
-                job.estimatingCost || 0,
-                job.bidAmount || 0,
-                job.bondAmount || 0,
-                `"${job.description || ''}"`,
-                this.companies[job.company].name
-            ].join(','))
-        ].join('\n');
-        
-        this.downloadFile(csvContent, `${this.companies[this.currentCompany].name}_Jobs_${this.formatDateForFilename(new Date())}.csv`, 'text/csv');
-    }
-    
-    exportToPDF(jobs) {
-        // Simple PDF content (in a real app, you'd use a PDF library)
-        const companyName = this.companies[this.currentCompany].name;
-        const content = `${companyName} - Job Report
-Generated: ${new Date().toLocaleDateString()}
-
-${jobs.map(job => `
-Project: ${job.projectName}
-Client: ${job.client}
-Location: ${job.location}
-Estimator: ${job.estimator}
-Deadline: ${this.formatDate(job.deadline)}
-Follow-up Date: ${job.followUpDate ? this.formatDate(job.followUpDate) : 'N/A'}
-Status: ${job.status}
-Estimating Cost: ${this.formatCurrency(job.estimatingCost || 0)}
-Bid Amount: ${this.formatCurrency(job.bidAmount || 0)}
-Bond Amount: ${this.formatCurrency(job.bondAmount || 0)}
-Description: ${job.description || 'N/A'}
----
-`).join('')}`;
-        
-        this.downloadFile(content, `${companyName}_Report_${this.formatDateForFilename(new Date())}.txt`, 'text/plain');
-    }
-    
-    downloadFile(content, filename, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(url);
-    }
-    
-    showLoading() {
-        document.getElementById('loading-overlay').style.display = 'flex';
-    }
-    
-    hideLoading() {
-        document.getElementById('loading-overlay').style.display = 'none';
-    }
-    
-    // Estimators Management
-    openEstimatorsModal() {
-        const company = this.companies[this.currentCompany];
-        document.getElementById('estimators-modal-title').textContent = `Manage Estimators - ${company.name}`;
-        this.renderEstimatorsList();
-        document.getElementById('estimators-modal').style.display = 'flex';
-        document.getElementById('new-estimator-name').focus();
-    }
-    
-    closeEstimatorsModal() {
-        document.getElementById('estimators-modal').style.display = 'none';
-        document.getElementById('new-estimator-name').value = '';
-    }
-    
-    renderEstimatorsList() {
-        const estimators = this.companies[this.currentCompany].estimators;
-        const container = document.getElementById('estimators-list');
-        
-        if (estimators.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: var(--gray-600); font-style: italic;">No estimators added yet.</p>';
-            return;
-        }
-        
-        container.innerHTML = estimators.map((estimator, index) => `
-            <div class="estimator-item" data-index="${index}">
-                <span class="estimator-name" id="estimator-name-${index}">${this.escapeHtml(estimator)}</span>
-                <div class="estimator-actions" id="estimator-actions-${index}">
-                    <button class="estimator-edit-btn" onclick="dashboard.editEstimator(${index})">✏️ Edit</button>
-                    <button class="estimator-delete-btn" onclick="dashboard.deleteEstimator(${index})" 
-                            ${this.isEstimatorInUse(estimator) ? 'disabled title="Cannot delete: Estimator has active jobs"' : ''}>
-                        🗑️ Delete
+                    <button class="btn btn-outline" onclick="app.editJob('${job.id}')">
+                        <span>✏️</span> Edit
+                    </button>
+                    <button class="btn btn-danger" onclick="app.handleJobDelete('${job.id}')">
+                        <span>🗑️</span> Delete
                     </button>
                 </div>
             </div>
         `).join('');
     }
-    
-    addEstimator() {
-        const nameInput = document.getElementById('new-estimator-name');
-        const name = nameInput.value.trim();
-        
-        if (!name) {
-            alert('Please enter an estimator name.');
-            nameInput.focus();
-            return;
-        }
-        
-        if (this.companies[this.currentCompany].estimators.includes(name)) {
-            alert('This estimator already exists.');
-            nameInput.focus();
-            return;
-        }
-        
-        this.companies[this.currentCompany].estimators.push(name);
-        nameInput.value = '';
-        this.renderEstimatorsList();
-        nameInput.focus();
-    }
-    
-    editEstimator(index) {
-        const estimator = this.companies[this.currentCompany].estimators[index];
-        const nameSpan = document.getElementById(`estimator-name-${index}`);
-        const actionsDiv = document.getElementById(`estimator-actions-${index}`);
-        
-        // Replace name with input field
-        nameSpan.innerHTML = `<input type="text" class="estimator-edit-input" id="edit-input-${index}" value="${this.escapeHtml(estimator)}" maxlength="50">`;
-        
-        // Replace actions with save/cancel buttons
-        actionsDiv.innerHTML = `
-            <div class="estimator-edit-actions">
-                <button class="estimator-save-btn" onclick="dashboard.saveEstimatorEdit(${index})">✓ Save</button>
-                <button class="estimator-cancel-btn" onclick="dashboard.cancelEstimatorEdit(${index})">✕ Cancel</button>
-            </div>
+
+    renderEstimatorFilter() {
+        const estimatorFilter = document.getElementById('estimator-filter');
+        if (!estimatorFilter) return;
+
+        estimatorFilter.innerHTML = `
+            <option value="all">All Estimators</option>
+            ${this.estimators.map(estimator => `
+                <option value="${estimator.name}">${estimator.name}</option>
+            `).join('')}
         `;
+    }
+
+    updateCompanyInfo() {
+        const companyName = this.getCompanyName(this.currentCompany);
+        document.title = `${companyName} - Bid Tracking Dashboard`;
         
-        // Focus on input and select all text
-        const input = document.getElementById(`edit-input-${index}`);
-        input.focus();
-        input.select();
-        
-        // Handle Enter key
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.saveEstimatorEdit(index);
-            } else if (e.key === 'Escape') {
-                this.cancelEstimatorEdit(index);
-            }
+        // Update any company-specific elements
+        const logoText = document.querySelector('.logo h1');
+        if (logoText) {
+            logoText.textContent = companyName;
+        }
+    }
+
+    // Modal Methods
+    showAddJobModal() {
+        this.populateEstimatorDropdown();
+        this.clearJobForm();
+        this.showModal('job-modal');
+    }
+
+    editJob(jobId) {
+        const job = this.jobs.find(j => j.id === jobId);
+        if (job) {
+            this.populateJobForm(job);
+            this.populateEstimatorDropdown();
+            this.showModal('job-modal');
+        }
+    }
+
+    showExportModal() {
+        this.showModal('export-modal');
+    }
+
+    showEstimatorsModal() {
+        this.showModal('estimators-modal');
+    }
+
+    showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    hideModal() {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.style.display = 'none';
         });
     }
-    
-    saveEstimatorEdit(index) {
-        const input = document.getElementById(`edit-input-${index}`);
-        const newName = input.value.trim();
-        const oldName = this.companies[this.currentCompany].estimators[index];
-        
-        if (!newName) {
-            alert('Estimator name cannot be empty.');
-            input.focus();
+
+    populateEstimatorDropdown() {
+        const select = document.getElementById('estimator-select');
+        if (select) {
+            select.innerHTML = `
+                <option value="">Select Estimator</option>
+                ${this.estimators.map(est => `
+                    <option value="${est.name}">${est.name}</option>
+                `).join('')}
+            `;
+        }
+    }
+
+    populateJobForm(job) {
+        const form = document.getElementById('job-form');
+        if (form && job) {
+            form.dataset.jobId = job.id;
+            form.title.value = job.title || '';
+            form.client.value = job.client || '';
+            form.location.value = job.location || '';
+            form.estimator.value = job.estimator || '';
+            form.deadline.value = job.deadline ? this.formatDateForInput(job.deadline) : '';
+            form.bidValue.value = job.bidValue || '';
+            form.status.value = job.status || '';
+            form.notes.value = job.notes || '';
+        }
+    }
+
+    clearJobForm() {
+        const form = document.getElementById('job-form');
+        if (form) {
+            form.reset();
+            delete form.dataset.jobId;
+        }
+    }
+
+    async handleJobDelete(jobId) {
+        if (!confirm('Are you sure you want to delete this job?')) {
             return;
         }
-        
-        // Check if name already exists (excluding current name)
-        const existingNames = this.companies[this.currentCompany].estimators.filter((name, i) => i !== index);
-        if (existingNames.includes(newName)) {
-            alert('This estimator name already exists.');
-            input.focus();
+
+        if (!this.firebaseLoaded) {
+            this.showNotification('Demo mode: Job would be deleted from Firebase', 'info');
+            // Remove from local array for demo
+            this.jobs = this.jobs.filter(job => job.id !== jobId);
+            this.renderJobs();
             return;
         }
-        
-        // Update estimator name
-        this.companies[this.currentCompany].estimators[index] = newName;
-        
-        // Update any jobs that reference the old estimator name
-        this.jobs.forEach(job => {
-            if (job.company === this.currentCompany && job.estimator === oldName) {
-                job.estimator = newName;
-            }
-        });
-        
-        this.renderEstimatorsList();
-    }
-    
-    cancelEstimatorEdit(index) {
-        this.renderEstimatorsList();
-    }
-    
-    deleteEstimator(index) {
-        const estimator = this.companies[this.currentCompany].estimators[index];
-        
-        if (this.isEstimatorInUse(estimator)) {
-            alert('Cannot delete this estimator because they are assigned to active jobs.');
-            return;
-        }
-        
-        if (confirm(`Are you sure you want to delete "${estimator}"?`)) {
-            this.companies[this.currentCompany].estimators.splice(index, 1);
-            this.renderEstimatorsList();
+
+        try {
+            this.showLoading('Deleting job...');
+            await this.dbService.deleteJob(jobId);
+            this.hideLoading();
+            this.showNotification('Job deleted successfully!', 'success');
+        } catch (error) {
+            this.hideLoading();
+            console.error('Error deleting job:', error);
+            this.showNotification('Error deleting job. Please try again.', 'error');
         }
     }
-    
-    isEstimatorInUse(estimatorName) {
-        return this.jobs.some(job => 
-            job.company === this.currentCompany && 
-            job.estimator === estimatorName
-        );
+
+    // Utility Methods
+    getCompanyName(companyId) {
+        const companies = {
+            'mhc': 'MH Construction',
+            'hdd': 'High Desert Drywall'
+        };
+        return companies[companyId] || companyId;
     }
-    
-    saveEstimators() {
-        // Save company data with updated estimators
-        this.saveData();
-        
-        // Update estimator dropdowns
-        this.updateEstimatorOptions();
-        
-        // Update filters if necessary
-        this.applyFilters();
-        
-        this.closeEstimatorsModal();
-        
-        // Show success message
-        const company = this.companies[this.currentCompany];
-        alert(`Estimators for ${company.name} have been updated successfully.`);
+
+    setCompanyTheme() {
+        document.body.className = `${this.currentCompany}-theme`;
     }
-    
-    // Utility functions
-    generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount || 0);
     }
-    
+
+    formatDate(date) {
+        if (!date) return 'N/A';
+        const d = date.seconds ? new Date(date.seconds * 1000) : new Date(date);
+        return d.toLocaleDateString();
+    }
+
+    formatDateForInput(date) {
+        if (!date) return '';
+        const d = date.seconds ? new Date(date.seconds * 1000) : new Date(date);
+        return d.toISOString().split('T')[0];
+    }
+
+    formatStatus(status) {
+        return status.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    }
+
+    getDeadlineClass(deadline) {
+        if (!deadline) return '';
+        const d = deadline.seconds ? new Date(deadline.seconds * 1000) : new Date(deadline);
+        const now = new Date();
+        const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) return 'overdue';
+        if (diffDays <= 7) return 'soon';
+        return '';
+    }
+
+    getDeadlineText(deadline) {
+        if (!deadline) return '';
+        const d = deadline.seconds ? new Date(deadline.seconds * 1000) : new Date(deadline);
+        const now = new Date();
+        const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) return `${Math.abs(diffDays)} days overdue`;
+        if (diffDays === 0) return 'Due today';
+        if (diffDays === 1) return 'Due tomorrow';
+        return `${diffDays} days remaining`;
+    }
+
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-    
-    formatDate(dateString) {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
-    
-    formatDateForFilename(date) {
-        return date.toISOString().split('T')[0];
+
+    showLoading(message = 'Loading...') {
+        const overlay = document.getElementById('loading-overlay');
+        const text = document.getElementById('loading-text');
+        if (overlay && text) {
+            text.textContent = message;
+            overlay.style.display = 'flex';
+        }
     }
-    
-    getStatusClass(status) {
-        return status.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+    hideLoading() {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
     }
-    
-    isOverdue(deadline) {
-        return new Date(deadline) < new Date().setHours(0, 0, 0, 0);
-    }
-    
-    getDeadlineClass(deadline) {
-        const today = new Date().setHours(0, 0, 0, 0);
-        const deadlineDate = new Date(deadline).getTime();
-        const daysUntil = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            z-index: 10000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        `;
+        notification.textContent = message;
         
-        if (daysUntil < 0) return 'overdue';
-        if (daysUntil <= 3) return 'soon';
-        return '';
-    }
-    
-    getDeadlineText(deadline) {
-        const today = new Date().setHours(0, 0, 0, 0);
-        const deadlineDate = new Date(deadline).getTime();
-        const daysUntil = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+        // Add to page
+        document.body.appendChild(notification);
         
-        if (daysUntil < 0) return `${Math.abs(daysUntil)} days overdue`;
-        if (daysUntil === 0) return 'Due today';
-        if (daysUntil === 1) return 'Due tomorrow';
-        return `${daysUntil} days remaining`;
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
     }
-    
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(amount);
+
+    destroy() {
+        // Cleanup subscriptions
+        if (this.unsubscribeJobs) {
+            this.unsubscribeJobs();
+        }
     }
 }
 
-// Initialize the dashboard when the page loads
-let dashboard;
+// Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    dashboard = new JobBiddingDashboard();
+    console.log('📄 DOM loaded, initializing app...');
+    window.app = new BidTrackingApp();
 });
 
-// Make dashboard available globally for onclick handlers
-window.dashboard = dashboard;
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (window.app) {
+        window.app.destroy();
+    }
+});
+
+console.log('📋 App.js module loaded successfully');
+
+export default BidTrackingApp;
+    constructor() {
+        this.currentCompany = localStorage.getItem('currentCompany') || 'mhc';
+        this.currentView = 'table';
+        this.jobs = [];
+        this.estimators = [];
+        this.stats = {};
+        this.unsubscribeJobs = null;
+        
+        this.init();
+    }
+
+    async init() {
+        try {
+            this.setupEventListeners();
+            this.setCompanyTheme();
+            await this.loadInitialData();
+            this.renderPage();
+            
+            // Set up real-time job updates
+            this.subscribeToJobUpdates();
+            
+            console.log('✅ App initialized successfully with Firebase');
+        } catch (error) {
+            console.error('❌ Error initializing app:', error);
+            this.showNotification('Error loading application. Please refresh the page.', 'error');
+        }
+    }
+
+    async loadInitialData() {
+        try {
+            this.showLoading('Loading data...');
+            
+            // Load jobs and estimators in parallel
+            const [jobs, estimators] = await Promise.all([
+                dbService.getJobsByCompany(this.currentCompany),
+                dbService.getEstimatorsByCompany(this.currentCompany)
+            ]);
+            
+            this.jobs = jobs;
+            this.estimators = estimators;
+            
+            // Calculate statistics
+            this.stats = await dbService.getJobStatistics(this.currentCompany);
+            
+            this.hideLoading();
+        } catch (error) {
+            this.hideLoading();
+            console.error('Error loading initial data:', error);
+            throw error;
+        }
+    }
+
+    subscribeToJobUpdates() {
+        // Unsubscribe from previous subscription if exists
+        if (this.unsubscribeJobs) {
+            this.unsubscribeJobs();
+        }
+
+        // Subscribe to real-time job updates
+        this.unsubscribeJobs = dbService.subscribeToJobs(this.currentCompany, (jobs) => {
+            this.jobs = jobs;
+            this.updateStatistics();
+            this.renderJobs();
+            this.renderStats();
+        });
+    }
+
+    async updateStatistics() {
+        try {
+            this.stats = await dbService.getJobStatistics(this.currentCompany);
+        } catch (error) {
+            console.error('Error updating statistics:', error);
+        }
+    }
+
+    setupEventListeners() {
+        // Company selector
+        const companySelect = document.getElementById('company-select');
+        if (companySelect) {
+            companySelect.value = this.currentCompany;
+            companySelect.addEventListener('change', (e) => {
+                this.switchCompany(e.target.value);
+            });
+        }
+
+        // Add job button
+        const addJobBtn = document.getElementById('add-job-btn');
+        if (addJobBtn) {
+            addJobBtn.addEventListener('click', () => {
+                this.showAddJobModal();
+            });
+        }
+
+        // Export button
+        const exportBtn = document.getElementById('export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.showExportModal();
+            });
+        }
+
+        // Manage estimators button
+        const manageEstimatorsBtn = document.getElementById('manage-estimators-btn');
+        if (manageEstimatorsBtn) {
+            manageEstimatorsBtn.addEventListener('click', () => {
+                this.showEstimatorsModal();
+            });
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', this.debounce((e) => {
+                this.handleSearch(e.target.value);
+            }, 300));
+        }
+
+        // View toggle buttons
+        const tableViewBtn = document.getElementById('table-view-btn');
+        const cardViewBtn = document.getElementById('card-view-btn');
+        
+        if (tableViewBtn) {
+            tableViewBtn.addEventListener('click', () => {
+                this.switchView('table');
+            });
+        }
+        
+        if (cardViewBtn) {
+            cardViewBtn.addEventListener('click', () => {
+                this.switchView('card');
+            });
+        }
+
+        // Filter selects
+        const statusFilter = document.getElementById('status-filter');
+        const estimatorFilter = document.getElementById('estimator-filter');
+        
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => {
+                this.applyFilters();
+            });
+        }
+        
+        if (estimatorFilter) {
+            estimatorFilter.addEventListener('change', () => {
+                this.applyFilters();
+            });
+        }
+
+        // Modal close handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.hideModal();
+            }
+            if (e.target.classList.contains('close-btn')) {
+                this.hideModal();
+            }
+        });
+
+        // Form submission handlers
+        const jobForm = document.getElementById('job-form');
+        if (jobForm) {
+            jobForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleJobSubmit(e);
+            });
+        }
+    }
+
+    async switchCompany(companyId) {
+        try {
+            this.currentCompany = companyId;
+            localStorage.setItem('currentCompany', companyId);
+            
+            this.setCompanyTheme();
+            await this.loadInitialData();
+            this.subscribeToJobUpdates();
+            this.renderPage();
+            
+            this.showNotification(`Switched to ${this.getCompanyName(companyId)}`, 'success');
+        } catch (error) {
+            console.error('Error switching company:', error);
+            this.showNotification('Error switching company', 'error');
+        }
+    }
+
+    async handleJobSubmit(event) {
+        try {
+            this.showLoading('Saving job...');
+            
+            const formData = new FormData(event.target);
+            const jobData = {
+                title: formData.get('title'),
+                client: formData.get('client'),
+                location: formData.get('location'),
+                estimator: formData.get('estimator'),
+                deadline: new Date(formData.get('deadline')),
+                bidValue: parseFloat(formData.get('bidValue')) || 0,
+                status: formData.get('status'),
+                notes: formData.get('notes') || '',
+                company: this.currentCompany
+            };
+
+            const jobId = event.target.dataset.jobId;
+            
+            if (jobId) {
+                // Update existing job
+                await dbService.updateJob(jobId, jobData);
+                this.showNotification('Job updated successfully!', 'success');
+            } else {
+                // Add new job
+                await dbService.addJob(jobData);
+                this.showNotification('Job added successfully!', 'success');
+            }
+            
+            this.hideModal();
+            this.hideLoading();
+            
+            // Data will be updated automatically via real-time subscription
+            
+        } catch (error) {
+            this.hideLoading();
+            console.error('Error saving job:', error);
+            this.showNotification('Error saving job. Please try again.', 'error');
+        }
+    }
+
+    async handleJobDelete(jobId) {
+        if (!confirm('Are you sure you want to delete this job?')) {
+            return;
+        }
+
+        try {
+            this.showLoading('Deleting job...');
+            await dbService.deleteJob(jobId);
+            this.hideLoading();
+            this.showNotification('Job deleted successfully!', 'success');
+            
+            // Data will be updated automatically via real-time subscription
+            
+        } catch (error) {
+            this.hideLoading();
+            console.error('Error deleting job:', error);
+            this.showNotification('Error deleting job. Please try again.', 'error');
+        }
+    }
+
+    async handleSearch(searchTerm) {
+        if (!searchTerm.trim()) {
+            this.renderJobs();
+            return;
+        }
+
+        try {
+            const searchResults = await dbService.searchJobs(this.currentCompany, searchTerm);
+            this.renderJobs(searchResults);
+        } catch (error) {
+            console.error('Error searching jobs:', error);
+            this.showNotification('Error searching jobs', 'error');
+        }
+    }
+
+    async handleExport(format) {
+        try {
+            this.showLoading('Exporting data...');
+            
+            const exportData = await dbService.exportJobs(this.currentCompany, format);
+            
+            // Create download
+            const blob = new Blob([exportData], { 
+                type: format === 'csv' ? 'text/csv' : 'application/json' 
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${this.getCompanyName(this.currentCompany)}-jobs-${new Date().toISOString().split('T')[0]}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            this.hideLoading();
+            this.hideModal();
+            this.showNotification('Export completed successfully!', 'success');
+            
+        } catch (error) {
+            this.hideLoading();
+            console.error('Error exporting data:', error);
+            this.showNotification('Error exporting data', 'error');
+        }
+    }
+
+    // UI Rendering Methods
+    renderPage() {
+        this.renderStats();
+        this.renderEstimatorFilter();
+        this.renderJobs();
+        this.updateCompanyInfo();
+    }
+
+    renderStats() {
+        // Implementation remains the same as before
+        // Update DOM with this.stats data
+        this.updateStatCard('total-jobs', this.stats.total || 0);
+        this.updateStatCard('in-progress', this.stats.inProgress || 0);
+        this.updateStatCard('submitted', this.stats.submitted || 0);
+        this.updateStatCard('follow-up', this.stats.followUp || 0);
+        this.updateStatCard('overdue', this.stats.overdue || 0);
+        this.updateStatCard('won', this.stats.won || 0);
+        
+        // Update bid values
+        this.updateBidValueCard();
+    }
+
+    updateStatCard(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    updateBidValueCard() {
+        const totalValueEl = document.getElementById('total-bid-value');
+        const wonValueEl = document.getElementById('won-value');
+        const pendingValueEl = document.getElementById('pending-value');
+        
+        if (totalValueEl) totalValueEl.textContent = this.formatCurrency(this.stats.totalValue || 0);
+        if (wonValueEl) wonValueEl.textContent = this.formatCurrency(this.stats.wonValue || 0);
+        if (pendingValueEl) pendingValueEl.textContent = this.formatCurrency(this.stats.pendingValue || 0);
+    }
+
+    renderJobs(jobsToRender = this.jobs) {
+        if (this.currentView === 'table') {
+            this.renderTableView(jobsToRender);
+        } else {
+            this.renderCardView(jobsToRender);
+        }
+    }
+
+    renderTableView(jobs) {
+        const tbody = document.querySelector('.jobs-table tbody');
+        if (!tbody) return;
+
+        if (jobs.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted">
+                        No jobs found. <a href="#" onclick="app.showAddJobModal()">Add your first job</a>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = jobs.map(job => `
+            <tr>
+                <td class="job-title">${this.escapeHtml(job.title)}</td>
+                <td>${this.escapeHtml(job.client)}</td>
+                <td>${this.escapeHtml(job.location || 'N/A')}</td>
+                <td>${this.escapeHtml(job.estimator || 'Unassigned')}</td>
+                <td>
+                    <div class="deadline">
+                        <span class="deadline-date">${this.formatDate(job.deadline)}</span>
+                        <span class="deadline-countdown ${this.getDeadlineClass(job.deadline)}">
+                            ${this.getDeadlineText(job.deadline)}
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge ${job.status}">${this.formatStatus(job.status)}</span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn edit" onclick="app.editJob('${job.id}')" title="Edit">
+                            ✏️
+                        </button>
+                        <button class="action-btn delete" onclick="app.handleJobDelete('${job.id}')" title="Delete">
+                            🗑️
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    renderCardView(jobs) {
+        const container = document.querySelector('.jobs-grid');
+        if (!container) return;
+
+        if (jobs.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-content">
+                        <h3>No jobs found</h3>
+                        <p>Get started by adding your first job</p>
+                        <button class="btn btn-primary" onclick="app.showAddJobModal()">
+                            <span>📝</span> Add Job
+                        </button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = jobs.map(job => `
+            <div class="job-card">
+                <div class="job-card-header">
+                    <h3 class="job-card-title">${this.escapeHtml(job.title)}</h3>
+                    <p class="job-card-client">${this.escapeHtml(job.client)}</p>
+                </div>
+                <div class="job-card-body">
+                    <div class="job-card-detail">
+                        <strong>Location:</strong>
+                        <span>${this.escapeHtml(job.location || 'N/A')}</span>
+                    </div>
+                    <div class="job-card-detail">
+                        <strong>Estimator:</strong>
+                        <span>${this.escapeHtml(job.estimator || 'Unassigned')}</span>
+                    </div>
+                    <div class="job-card-detail">
+                        <strong>Deadline:</strong>
+                        <span>${this.formatDate(job.deadline)}</span>
+                    </div>
+                    <div class="job-card-detail">
+                        <strong>Bid Value:</strong>
+                        <span>${this.formatCurrency(job.bidValue)}</span>
+                    </div>
+                    <div class="job-card-detail">
+                        <strong>Status:</strong>
+                        <span class="status-badge ${job.status}">${this.formatStatus(job.status)}</span>
+                    </div>
+                </div>
+                <div class="job-card-actions">
+                    <button class="btn btn-outline" onclick="app.editJob('${job.id}')">
+                        <span>✏️</span> Edit
+                    </button>
+                    <button class="btn btn-danger" onclick="app.handleJobDelete('${job.id}')">
+                        <span>🗑️</span> Delete
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ... (rest of the utility methods remain the same)
+    
+    // Utility Methods
+    getCompanyName(companyId) {
+        const companies = {
+            'mhc': 'MH Construction',
+            'hdd': 'High Desert Drywall'
+        };
+        return companies[companyId] || companyId;
+    }
+
+    setCompanyTheme() {
+        document.body.className = `${this.currentCompany}-theme`;
+    }
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount || 0);
+    }
+
+    formatDate(date) {
+        if (!date) return 'N/A';
+        const d = date.seconds ? new Date(date.seconds * 1000) : new Date(date);
+        return d.toLocaleDateString();
+    }
+
+    formatStatus(status) {
+        return status.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    }
+
+    getDeadlineClass(deadline) {
+        if (!deadline) return '';
+        const d = deadline.seconds ? new Date(deadline.seconds * 1000) : new Date(deadline);
+        const now = new Date();
+        const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) return 'overdue';
+        if (diffDays <= 7) return 'soon';
+        return '';
+    }
+
+    getDeadlineText(deadline) {
+        if (!deadline) return '';
+        const d = deadline.seconds ? new Date(deadline.seconds * 1000) : new Date(deadline);
+        const now = new Date();
+        const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) return `${Math.abs(diffDays)} days overdue`;
+        if (diffDays === 0) return 'Due today';
+        if (diffDays === 1) return 'Due tomorrow';
+        return `${diffDays} days remaining`;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    showLoading(message = 'Loading...') {
+        const overlay = document.getElementById('loading-overlay');
+        const text = document.getElementById('loading-text');
+        if (overlay && text) {
+            text.textContent = message;
+            overlay.style.display = 'flex';
+        }
+    }
+
+    hideLoading() {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 3000);
+    }
+
+    showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    hideModal() {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.style.display = 'none';
+        });
+    }
+
+    // Modal and form methods (abbreviated for space)
+    showAddJobModal() {
+        this.populateEstimatorDropdown();
+        this.showModal('job-modal');
+    }
+
+    editJob(jobId) {
+        const job = this.jobs.find(j => j.id === jobId);
+        if (job) {
+            this.populateJobForm(job);
+            this.showModal('job-modal');
+        }
+    }
+
+    populateEstimatorDropdown() {
+        const select = document.getElementById('estimator-select');
+        if (select) {
+            select.innerHTML = `
+                <option value="">Select Estimator</option>
+                ${this.estimators.map(est => `
+                    <option value="${est.name}">${est.name}</option>
+                `).join('')}
+            `;
+        }
+    }
+
+    destroy() {
+        // Cleanup subscriptions
+        if (this.unsubscribeJobs) {
+            this.unsubscribeJobs();
+        }
+    }
+}
+
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.app = new BidTrackingApp();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (window.app) {
+        window.app.destroy();
+    }
+});
+
+export default BidTrackingApp;

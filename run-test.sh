@@ -1,0 +1,1 @@
+cd /workspaces/dual-bid-tracking-tool && chmod +x start-test.sh && ./start-test.sh
