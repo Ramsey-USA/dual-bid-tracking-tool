@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MH Construction & High Desert Drywall - Job Bidding Dashboard</title>
+    <meta name="description" content="Professional construction project bidding dashboard for MH Construction and High Desert Drywall companies">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="mhc-theme">
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1 id="company-title">MH Construction</h1>
+                    <p id="company-subtitle">Professional Construction Services</p>
+                </div>
+                
+                <div class="company-selector">
+                    <label for="company-select" class="sr-only">Select Company</label>
+                    <select id="company-select" class="company-select">
+                        <option value="mhc">MH Construction</option>
+                        <option value="hdd">High Desert Drywall</option>
+                    </select>
+                </div>
+                
+                <nav class="nav">
+                    <button id="add-job-btn" class="btn btn-primary">
+                        <span>+</span> Add New Job
+                    </button>
+                    <button id="export-btn" class="btn btn-secondary">
+                        <span>📊</span> Export Data
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Dashboard Statistics -->
+            <section class="stats-section">
+                <div class="stats" id="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-jobs">0</div>
+                        <div class="stat-label">Total Jobs</div>
+                        <div class="stat-breakdown">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">MHC:</span>
+                                <span class="breakdown-value" id="mhc-total">0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">HDD:</span>
+                                <span class="breakdown-value" id="hdd-total">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="in-progress-jobs">0</div>
+                        <div class="stat-label">In Progress</div>
+                        <div class="stat-breakdown">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">MHC:</span>
+                                <span class="breakdown-value" id="mhc-progress">0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">HDD:</span>
+                                <span class="breakdown-value" id="hdd-progress">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="submitted-jobs">0</div>
+                        <div class="stat-label">Submitted</div>
+                        <div class="stat-breakdown">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">MHC:</span>
+                                <span class="breakdown-value" id="mhc-submitted">0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">HDD:</span>
+                                <span class="breakdown-value" id="hdd-submitted">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="followup-jobs">0</div>
+                        <div class="stat-label">Follow-ups</div>
+                        <div class="stat-breakdown">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">MHC:</span>
+                                <span class="breakdown-value" id="mhc-followup">0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">HDD:</span>
+                                <span class="breakdown-value" id="hdd-followup">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="overdue-jobs">0</div>
+                        <div class="stat-label">Overdue</div>
+                        <div class="stat-breakdown">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">MHC:</span>
+                                <span class="breakdown-value" id="mhc-overdue">0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">HDD:</span>
+                                <span class="breakdown-value" id="hdd-overdue">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="won-jobs">0</div>
+                        <div class="stat-label">Jobs Won</div>
+                        <div class="stat-breakdown">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">MHC:</span>
+                                <span class="breakdown-value" id="mhc-won">0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">HDD:</span>
+                                <span class="breakdown-value" id="hdd-won">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-bid-value">$0</div>
+                        <div class="stat-label">Total Bid Value</div>
+                        <div class="stat-breakdown">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">MHC:</span>
+                                <span class="breakdown-value" id="mhc-bid-value">$0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">HDD:</span>
+                                <span class="breakdown-value" id="hdd-bid-value">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Search and Filter Controls -->
+            <section class="controls-section">
+                <div class="search-filter-container">
+                    <div class="search-container">
+                        <input type="text" id="search-input" class="search-input" placeholder="Search projects, clients, or locations...">
+                        <button id="clear-search" class="clear-search" aria-label="Clear search">×</button>
+                    </div>
+                    
+                    <div class="filter-controls">
+                        <select id="status-filter" class="filter-select">
+                            <option value="">All Statuses</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Follow-up Required">Follow-up Required</option>
+                            <option value="Won">Won</option>
+                            <option value="Lost">Lost</option>
+                            <option value="No Bid">No Bid</option>
+                        </select>
+                        
+                        <select id="estimator-filter" class="filter-select">
+                            <option value="">All Estimators</option>
+                        </select>
+                        
+                        <button id="clear-filters" class="btn btn-outline">Clear Filters</button>
+                        
+                        <div class="view-toggle">
+                            <button id="table-view" class="view-btn active" data-view="table">
+                                <span>📋</span> Table View
+                            </button>
+                            <button id="card-view" class="view-btn" data-view="card">
+                                <span>📇</span> Card View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Jobs Display -->
+            <section class="jobs-section">
+                <!-- Table View -->
+                <div id="table-container" class="table-container">
+                    <table class="jobs-table">
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Deadline</th>
+                                <th>Follow-up Date</th>
+                                <th>Estimating Cost</th>
+                                <th>Bid Amount</th>
+                                <th>Bond Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobs-table-body">
+                            <!-- Jobs will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Card View -->
+                <div id="card-container" class="card-container" style="display: none;">
+                    <div id="jobs-card-container" class="jobs-grid">
+                        <!-- Job cards will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <div class="empty-state-content">
+                        <h3>No jobs found</h3>
+                        <p>Get started by adding your first construction project bid.</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('add-job-btn').click()">
+                            <span>+</span> Add Your First Job
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Job Modal -->
+    <div id="job-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Add New Job</h2>
+                <button id="close-modal" class="close-btn" aria-label="Close modal">×</button>
+            </div>
+            
+            <form id="job-form" class="job-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="project-name">Project Name *</label>
+                        <input type="text" id="project-name" name="projectName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client">Client *</label>
+                        <input type="text" id="client" name="client" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="location">Location *</label>
+                        <input type="text" id="location" name="location" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="estimator">Estimator *</label>
+                        <select id="estimator" name="estimator" required>
+                            <option value="">Select Estimator</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deadline">Deadline *</label>
+                        <input type="date" id="deadline" name="deadline" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="follow-up-date">Follow-up Date</label>
+                        <input type="date" id="follow-up-date" name="followUpDate">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="estimating-cost">Estimating Cost</label>
+                        <input type="number" id="estimating-cost" name="estimatingCost" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="bid-amount">Bid Amount</label>
+                        <input type="number" id="bid-amount" name="bidAmount" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bond-amount">Bond Amount</label>
+                        <input type="number" id="bond-amount" name="bondAmount" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status *</label>
+                        <select id="status" name="status" required>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Follow-up Required">Follow-up Required</option>
+                            <option value="Won">Won</option>
+                            <option value="Lost">Lost</option>
+                            <option value="No Bid">No Bid</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Project Description</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Brief description of the project..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="cancel-btn" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span id="submit-text">Save Job</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Export Data</h2>
+                <button id="close-export-modal" class="close-btn" aria-label="Close export modal">×</button>
+            </div>
+            
+            <div class="export-options">
+                <div class="export-format">
+                    <h3>Export Format</h3>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="export-format" value="csv" checked>
+                            <span>Excel (CSV)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="export-format" value="pdf">
+                            <span>PDF Report</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="export-scope">
+                    <h3>Export Scope</h3>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="export-scope" value="filtered" checked>
+                            <span>Current View (Filtered Results)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="export-scope" value="all">
+                            <span id="export-all-label">All Company Jobs</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="export-actions">
+                    <button id="cancel-export" class="btn btn-outline">Cancel</button>
+                    <button id="confirm-export" class="btn btn-primary">Export Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
