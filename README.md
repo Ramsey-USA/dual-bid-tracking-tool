@@ -29,8 +29,17 @@ A comprehensive, responsive web application for tracking construction project bi
 - Location
 - Assigned Estimator
 - Deadline with countdown
+<<<<<<< HEAD
 - Project Status (In Progress, Submitted, Follow-up Required, Won, Lost, No Bid)
 - Project Description
+=======
+- Follow-up with countdown
+- Project Status (In Progress, Submitted, Won, Lost, No Bid)
+- Project Description
+- Estimating Cost (from the architect)
+- Bond Amount (% of Estimating Cost)
+- Bid Amount (from our Estimator)
+>>>>>>> c28df916f4607815723b651e22db8ef90b6b0705
 - Company Assignment (automatic)
 
 ### User Experience
