@@ -8,15 +8,20 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="mhc-theme">
     <header class="header">
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <h1 id="company-title">MH Construction</h1>
-                    <p id="company-subtitle">Professional Construction Services</p>
+                    <div class="logo-container">
+                        <span id="company-icon" class="company-icon">🪖</span>
+                        <div class="logo-text">
+                            <h1 id="company-title">MH Construction</h1>
+                            <p id="company-subtitle">Professional Construction Services</p>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="company-selector">
@@ -28,6 +33,9 @@
                 </div>
                 
                 <nav class="nav">
+                    <button id="manage-estimators-btn" class="btn btn-outline" title="Manage Estimators">
+                        <span>👥</span> Estimators
+                    </button>
                     <button id="add-job-btn" class="btn btn-primary">
                         <span>+</span> Add New Job
                     </button>
@@ -226,6 +234,60 @@
         </div>
     </main>
 
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <span id="footer-icon" class="footer-company-icon">🪖</span>
+                        <div class="footer-company-info">
+                            <h4 id="footer-company-name">MH Construction</h4>
+                            <p id="footer-company-tagline">Building Excellence Since 2010</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Quick Links</h5>
+                    <ul class="footer-links">
+                        <li><a href="#" onclick="dashboard.openJobModal()">Add New Job</a></li>
+                        <li><a href="#" onclick="dashboard.openExportModal()">Export Data</a></li>
+                        <li><a href="#" onclick="dashboard.clearFilters()">Clear Filters</a></li>
+                        <li><a href="#" onclick="dashboard.setView('table')">Table View</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Statistics</h5>
+                    <div class="footer-stats">
+                        <div class="footer-stat">
+                            <span id="footer-total-jobs">0</span>
+                            <small>Total Jobs</small>
+                        </div>
+                        <div class="footer-stat">
+                            <span id="footer-total-value">$0</span>
+                            <small>Total Value</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h5>Contact</h5>
+                    <div class="footer-contact">
+                        <p><strong>Phone:</strong> <span id="footer-phone">(555) 123-4567</span></p>
+                        <p><strong>Email:</strong> <span id="footer-email">info@mhconstruction.com</span></p>
+                        <p><strong>Location:</strong> <span id="footer-location">Phoenix, AZ</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 <span id="footer-copyright-company">MH Construction</span>. All rights reserved. | Built with precision for construction professionals.</p>
+            </div>
+        </div>
+    </footer>
+
     <!-- Job Modal -->
     <div id="job-modal" class="modal" style="display: none;">
         <div class="modal-content">
@@ -354,6 +416,39 @@
                 <div class="export-actions">
                     <button id="cancel-export" class="btn btn-outline">Cancel</button>
                     <button id="confirm-export" class="btn btn-primary">Export Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estimators Management Modal -->
+    <div id="estimators-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="estimators-modal-title">Manage Estimators - MH Construction</h2>
+                <button id="close-estimators-modal" class="close-btn" aria-label="Close estimators modal">×</button>
+            </div>
+            
+            <div class="estimators-management">
+                <div class="add-estimator-section">
+                    <h3>Add New Estimator</h3>
+                    <div class="add-estimator-form">
+                        <input type="text" id="new-estimator-name" placeholder="Enter estimator name" maxlength="50">
+                        <button id="add-estimator-btn" class="btn btn-primary">Add Estimator</button>
+                    </div>
+                </div>
+                
+                <div class="estimators-list-section">
+                    <h3>Current Estimators</h3>
+                    <div id="estimators-list" class="estimators-list">
+                        <!-- Estimators will be populated here -->
+                    </div>
+                    <p class="estimators-note">Note: You cannot delete an estimator if they are assigned to active jobs.</p>
+                </div>
+                
+                <div class="estimators-actions">
+                    <button id="cancel-estimators" class="btn btn-outline">Close</button>
+                    <button id="save-estimators" class="btn btn-primary">Save Changes</button>
                 </div>
             </div>
         </div>

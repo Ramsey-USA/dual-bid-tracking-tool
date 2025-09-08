@@ -38,7 +38,7 @@
     --gray-800: #1f2937;
     
     /* Typography */
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-family: 'Saira', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.875rem;
     --font-size-base: 1rem;
@@ -138,6 +138,41 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-6);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+}
+
+.company-icon {
+    font-size: var(--font-size-4xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.company-icon:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
 }
 
 .logo h1 {
@@ -900,6 +935,304 @@ body {
     font-weight: 500;
 }
 
+/* ===== FOOTER ===== */
+.footer {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    padding: var(--spacing-8) 0 var(--spacing-4);
+    margin-top: var(--spacing-8);
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+}
+
+.footer-section h5 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--spacing-4);
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+}
+
+.footer-company-icon {
+    font-size: var(--font-size-3xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.footer-company-info h4 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    margin-bottom: var(--spacing-1);
+    color: white;
+}
+
+.footer-company-info p {
+    font-size: var(--font-size-sm);
+    opacity: 0.8;
+    margin: 0;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links li {
+    margin-bottom: var(--spacing-2);
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.footer-links a:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.footer-stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+}
+
+.footer-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.footer-stat span {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: white;
+}
+
+.footer-stat small {
+    font-size: var(--font-size-xs);
+    opacity: 0.8;
+    margin-top: var(--spacing-1);
+}
+
+.footer-contact p {
+    margin-bottom: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    opacity: 0.9;
+}
+
+.footer-contact strong {
+    color: white;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: var(--spacing-4);
+    text-align: center;
+}
+
+.footer-bottom p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    opacity: 0.8;
+}
+
+/* ===== ESTIMATORS MANAGEMENT MODAL ===== */
+.estimators-management {
+    padding: var(--spacing-4);
+}
+
+.add-estimator-section {
+    margin-bottom: var(--spacing-6);
+    padding-bottom: var(--spacing-4);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.add-estimator-section h3 {
+    margin-bottom: var(--spacing-3);
+    color: var(--text-color);
+    font-size: var(--font-size-lg);
+}
+
+.add-estimator-form {
+    display: flex;
+    gap: var(--spacing-3);
+    align-items: center;
+}
+
+.add-estimator-form input {
+    flex: 1;
+    padding: var(--spacing-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    transition: all 0.3s ease;
+}
+
+.add-estimator-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.estimators-list-section h3 {
+    margin-bottom: var(--spacing-3);
+    color: var(--text-color);
+    font-size: var(--font-size-lg);
+}
+
+.estimators-list {
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-4);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: var(--spacing-3);
+}
+
+.estimator-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-3);
+    background: white;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-2);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.estimator-item:last-child {
+    margin-bottom: 0;
+}
+
+.estimator-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.estimator-name {
+    font-weight: 500;
+    color: var(--text-color);
+    flex: 1;
+}
+
+.estimator-actions {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.estimator-edit-btn,
+.estimator-delete-btn {
+    padding: var(--spacing-1) var(--spacing-2);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.estimator-edit-btn {
+    background: var(--blue-100);
+    color: var(--blue-700);
+}
+
+.estimator-edit-btn:hover {
+    background: var(--blue-200);
+}
+
+.estimator-delete-btn {
+    background: var(--red-100);
+    color: var(--red-700);
+}
+
+.estimator-delete-btn:hover {
+    background: var(--red-200);
+}
+
+.estimator-delete-btn:disabled {
+    background: var(--gray-100);
+    color: var(--gray-400);
+    cursor: not-allowed;
+}
+
+.estimators-note {
+    font-size: var(--font-size-xs);
+    color: var(--gray-600);
+    font-style: italic;
+    margin: 0;
+}
+
+.estimators-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-3);
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--border-color);
+}
+
+.estimator-edit-input {
+    flex: 1;
+    padding: var(--spacing-2);
+    border: 1px solid var(--primary-color);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    background: var(--primary-50);
+}
+
+.estimator-edit-actions {
+    display: flex;
+    gap: var(--spacing-1);
+}
+
+.estimator-save-btn,
+.estimator-cancel-btn {
+    padding: var(--spacing-1) var(--spacing-2);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.estimator-save-btn {
+    background: var(--green-600);
+    color: white;
+}
+
+.estimator-save-btn:hover {
+    background: var(--green-700);
+}
+
+.estimator-cancel-btn {
+    background: var(--gray-300);
+    color: var(--gray-700);
+}
+
+.estimator-cancel-btn:hover {
+    background: var(--gray-400);
+}
+
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1024px) {
     .stats {
@@ -1019,6 +1352,22 @@ body {
     .export-actions {
         flex-direction: column;
     }
+    
+    /* Mobile logo adjustments */
+    .logo-container {
+        justify-content: center;
+        gap: var(--spacing-3);
+    }
+    
+    .company-icon {
+        width: 50px;
+        height: 50px;
+        font-size: var(--font-size-3xl);
+    }
+    
+    .logo h1 {
+        font-size: var(--font-size-2xl);
+    }
 }
 
 @media (max-width: 480px) {
@@ -1050,5 +1399,46 @@ body {
     
     .stats {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-4);
+        text-align: center;
+    }
+    
+    .footer-logo {
+        justify-content: center;
+    }
+    
+    .footer-company-icon {
+        width: 45px;
+        height: 45px;
+        font-size: var(--font-size-2xl);
+    }
+    
+    .footer-stats {
+        flex-direction: row;
+        justify-content: center;
+        gap: var(--spacing-6);
+    }
+    
+    .footer-stat {
+        align-items: center;
+    }
+    
+    .add-estimator-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .estimator-actions {
+        flex-direction: column;
+        gap: var(--spacing-1);
+    }
+    
+    .estimator-edit-btn,
+    .estimator-delete-btn {
+        width: 100%;
     }
 }

@@ -1,5 +1,29 @@
 /**
- * MH Construction & High Desert Drywall - Job Bidding Dashboard
+ * MH Constructi        // Company configurations
+        this.companies = {
+            mhc: {
+                name: 'MH Construction',
+                subtitle: 'Professional Construction Services',
+                theme: 'mhc-theme',
+                icon: '🪖',
+                estimators: ['John Smith', 'Sarah Johnson', 'Mike Wilson', 'Lisa Chen'],
+                tagline: 'Building Excellence Since 2010',
+                phone: '(555) 123-4567',
+                email: 'info@mhconstruction.com',
+                location: 'Phoenix, AZ'
+            },
+            hdd: {
+                name: 'High Desert Drywall',
+                subtitle: 'Precision Drywall Solutions',
+                theme: 'hdd-theme',
+                icon: '🪜',
+                estimators: ['David Rodriguez', 'Emily Thompson', 'James Martinez', 'Anna Foster'],
+                tagline: 'Precision Finishes Since 2015',
+                phone: '(555) 987-6543',
+                email: 'info@highdesertdrywall.com',
+                location: 'Mesa, AZ'
+            }
+        };Drywall - Job Bidding Dashboard
  * Dual-company construction project management application
  * 
  * Features:
@@ -24,12 +48,14 @@ class JobBiddingDashboard {
                 name: 'MH Construction',
                 subtitle: 'Professional Construction Services',
                 theme: 'mhc-theme',
+                icon: '🪖',
                 estimators: ['John Smith', 'Sarah Johnson', 'Mike Wilson', 'Lisa Chen']
             },
             hdd: {
                 name: 'High Desert Drywall',
                 subtitle: 'Precision Drywall Solutions',
                 theme: 'hdd-theme',
+                icon: '�️',
                 estimators: ['David Rodriguez', 'Emily Thompson', 'James Martinez', 'Anna Foster']
             }
         };
@@ -166,6 +192,10 @@ class JobBiddingDashboard {
         });
         
         // Navigation buttons
+        document.getElementById('manage-estimators-btn').addEventListener('click', () => {
+            this.openEstimatorsModal();
+        });
+        
         document.getElementById('add-job-btn').addEventListener('click', () => {
             this.openJobModal();
         });
@@ -232,6 +262,29 @@ class JobBiddingDashboard {
             this.exportData();
         });
         
+        // Estimators modal events
+        document.getElementById('close-estimators-modal').addEventListener('click', () => {
+            this.closeEstimatorsModal();
+        });
+        
+        document.getElementById('cancel-estimators').addEventListener('click', () => {
+            this.closeEstimatorsModal();
+        });
+        
+        document.getElementById('save-estimators').addEventListener('click', () => {
+            this.saveEstimators();
+        });
+        
+        document.getElementById('add-estimator-btn').addEventListener('click', () => {
+            this.addEstimator();
+        });
+        
+        document.getElementById('new-estimator-name').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.addEstimator();
+            }
+        });
+        
         // Close modals on backdrop click
         document.getElementById('job-modal').addEventListener('click', (e) => {
             if (e.target.id === 'job-modal') {
@@ -242,6 +295,12 @@ class JobBiddingDashboard {
         document.getElementById('export-modal').addEventListener('click', (e) => {
             if (e.target.id === 'export-modal') {
                 this.closeExportModal();
+            }
+        });
+        
+        document.getElementById('estimators-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'estimators-modal') {
+                this.closeEstimatorsModal();
             }
         });
     }
@@ -262,9 +321,19 @@ class JobBiddingDashboard {
         // Update body theme class
         document.body.className = company.theme;
         
-        // Update header text
+        // Update header text and icon
         document.getElementById('company-title').textContent = company.name;
         document.getElementById('company-subtitle').textContent = company.subtitle;
+        document.getElementById('company-icon').textContent = company.icon;
+        
+        // Update footer content
+        document.getElementById('footer-icon').textContent = company.icon;
+        document.getElementById('footer-company-name').textContent = company.name;
+        document.getElementById('footer-company-tagline').textContent = company.tagline;
+        document.getElementById('footer-phone').textContent = company.phone;
+        document.getElementById('footer-email').textContent = company.email;
+        document.getElementById('footer-location').textContent = company.location;
+        document.getElementById('footer-copyright-company').textContent = company.name;
         
         // Update export modal label
         document.getElementById('export-all-label').textContent = `All ${company.name} Jobs`;
@@ -543,6 +612,12 @@ class JobBiddingDashboard {
         document.getElementById('total-bid-value').textContent = this.formatCurrency(totalBidValue);
         document.getElementById('mhc-bid-value').textContent = this.formatCurrency(mhcBidValue);
         document.getElementById('hdd-bid-value').textContent = this.formatCurrency(hddBidValue);
+        
+        // Update footer stats
+        const currentCompanyJobs = this.jobs.filter(job => job.company === this.currentCompany);
+        const currentCompanyValue = currentCompanyJobs.reduce((sum, job) => sum + (job.bidAmount || 0), 0);
+        document.getElementById('footer-total-jobs').textContent = currentCompanyJobs.length;
+        document.getElementById('footer-total-value').textContent = this.formatCurrency(currentCompanyValue);
     }
     
     openJobModal(job = null) {
@@ -733,6 +808,170 @@ Description: ${job.description || 'N/A'}
     
     hideLoading() {
         document.getElementById('loading-overlay').style.display = 'none';
+    }
+    
+    // Estimators Management
+    openEstimatorsModal() {
+        const company = this.companies[this.currentCompany];
+        document.getElementById('estimators-modal-title').textContent = `Manage Estimators - ${company.name}`;
+        this.renderEstimatorsList();
+        document.getElementById('estimators-modal').style.display = 'flex';
+        document.getElementById('new-estimator-name').focus();
+    }
+    
+    closeEstimatorsModal() {
+        document.getElementById('estimators-modal').style.display = 'none';
+        document.getElementById('new-estimator-name').value = '';
+    }
+    
+    renderEstimatorsList() {
+        const estimators = this.companies[this.currentCompany].estimators;
+        const container = document.getElementById('estimators-list');
+        
+        if (estimators.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--gray-600); font-style: italic;">No estimators added yet.</p>';
+            return;
+        }
+        
+        container.innerHTML = estimators.map((estimator, index) => `
+            <div class="estimator-item" data-index="${index}">
+                <span class="estimator-name" id="estimator-name-${index}">${this.escapeHtml(estimator)}</span>
+                <div class="estimator-actions" id="estimator-actions-${index}">
+                    <button class="estimator-edit-btn" onclick="dashboard.editEstimator(${index})">✏️ Edit</button>
+                    <button class="estimator-delete-btn" onclick="dashboard.deleteEstimator(${index})" 
+                            ${this.isEstimatorInUse(estimator) ? 'disabled title="Cannot delete: Estimator has active jobs"' : ''}>
+                        🗑️ Delete
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    addEstimator() {
+        const nameInput = document.getElementById('new-estimator-name');
+        const name = nameInput.value.trim();
+        
+        if (!name) {
+            alert('Please enter an estimator name.');
+            nameInput.focus();
+            return;
+        }
+        
+        if (this.companies[this.currentCompany].estimators.includes(name)) {
+            alert('This estimator already exists.');
+            nameInput.focus();
+            return;
+        }
+        
+        this.companies[this.currentCompany].estimators.push(name);
+        nameInput.value = '';
+        this.renderEstimatorsList();
+        nameInput.focus();
+    }
+    
+    editEstimator(index) {
+        const estimator = this.companies[this.currentCompany].estimators[index];
+        const nameSpan = document.getElementById(`estimator-name-${index}`);
+        const actionsDiv = document.getElementById(`estimator-actions-${index}`);
+        
+        // Replace name with input field
+        nameSpan.innerHTML = `<input type="text" class="estimator-edit-input" id="edit-input-${index}" value="${this.escapeHtml(estimator)}" maxlength="50">`;
+        
+        // Replace actions with save/cancel buttons
+        actionsDiv.innerHTML = `
+            <div class="estimator-edit-actions">
+                <button class="estimator-save-btn" onclick="dashboard.saveEstimatorEdit(${index})">✓ Save</button>
+                <button class="estimator-cancel-btn" onclick="dashboard.cancelEstimatorEdit(${index})">✕ Cancel</button>
+            </div>
+        `;
+        
+        // Focus on input and select all text
+        const input = document.getElementById(`edit-input-${index}`);
+        input.focus();
+        input.select();
+        
+        // Handle Enter key
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.saveEstimatorEdit(index);
+            } else if (e.key === 'Escape') {
+                this.cancelEstimatorEdit(index);
+            }
+        });
+    }
+    
+    saveEstimatorEdit(index) {
+        const input = document.getElementById(`edit-input-${index}`);
+        const newName = input.value.trim();
+        const oldName = this.companies[this.currentCompany].estimators[index];
+        
+        if (!newName) {
+            alert('Estimator name cannot be empty.');
+            input.focus();
+            return;
+        }
+        
+        // Check if name already exists (excluding current name)
+        const existingNames = this.companies[this.currentCompany].estimators.filter((name, i) => i !== index);
+        if (existingNames.includes(newName)) {
+            alert('This estimator name already exists.');
+            input.focus();
+            return;
+        }
+        
+        // Update estimator name
+        this.companies[this.currentCompany].estimators[index] = newName;
+        
+        // Update any jobs that reference the old estimator name
+        this.jobs.forEach(job => {
+            if (job.company === this.currentCompany && job.estimator === oldName) {
+                job.estimator = newName;
+            }
+        });
+        
+        this.renderEstimatorsList();
+    }
+    
+    cancelEstimatorEdit(index) {
+        this.renderEstimatorsList();
+    }
+    
+    deleteEstimator(index) {
+        const estimator = this.companies[this.currentCompany].estimators[index];
+        
+        if (this.isEstimatorInUse(estimator)) {
+            alert('Cannot delete this estimator because they are assigned to active jobs.');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to delete "${estimator}"?`)) {
+            this.companies[this.currentCompany].estimators.splice(index, 1);
+            this.renderEstimatorsList();
+        }
+    }
+    
+    isEstimatorInUse(estimatorName) {
+        return this.jobs.some(job => 
+            job.company === this.currentCompany && 
+            job.estimator === estimatorName
+        );
+    }
+    
+    saveEstimators() {
+        // Save company data with updated estimators
+        this.saveData();
+        
+        // Update estimator dropdowns
+        this.updateEstimatorOptions();
+        
+        // Update filters if necessary
+        this.applyFilters();
+        
+        this.closeEstimatorsModal();
+        
+        // Show success message
+        const company = this.companies[this.currentCompany];
+        alert(`Estimators for ${company.name} have been updated successfully.`);
     }
     
     // Utility functions
