@@ -196,6 +196,7 @@ class BidTrackingApp {
                     this.hideLoading();
                     this.showNotification('Estimator added successfully!', 'success');
                     await this.loadInitialData();
+                    this.populateEstimatorDropdown();
                 } catch (error) {
                     this.hideLoading();
                     console.error('Error saving estimator:', error);
@@ -580,14 +581,12 @@ class BidTrackingApp {
     }
 
     populateEstimatorDropdown() {
-        const select = document.getElementById('estimator-select');
+        const select = document.getElementById('estimator');
         if (select) {
-            select.innerHTML = `
-                <option value="">Select Estimator</option>
-                ${this.estimators.map(est => `
-                    <option value="${est.name}">${est.name}</option>
-                `).join('')}
-            `;
+            select.innerHTML = '<option value="">Select Estimator</option>' +
+                this.estimators.map(est =>
+                    `<option value="${est.name}">${est.name}</option>`
+                ).join('');
         }
     }
 
@@ -763,6 +762,7 @@ class BidTrackingApp {
             this.showNotification('Estimator added successfully!', 'success');
             // Refresh estimators list
             await this.loadInitialData();
+            this.populateEstimatorDropdown();
         } catch (error) {
             this.hideLoading();
             console.error('Error saving estimator:', error);
