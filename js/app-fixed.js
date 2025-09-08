@@ -23,7 +23,6 @@ function getDbService() {
 
 class App {
   constructor() {
-    console.log('App initializing');
     this.currentCompany = 'mhc';
     this.estimators = [];
     this.jobs = [];
@@ -92,14 +91,11 @@ class App {
 
   setupEventListeners() {
     try {
-      console.log('Attaching event listeners');
       const companySelect = document.getElementById('company-select');
       const addJobBtn = document.getElementById('add-job-btn');
       const manageEstimatorsBtn = document.getElementById('manage-estimators-btn');
       const tableViewBtn = document.getElementById('table-view');
       const cardViewBtn = document.getElementById('card-view');
-
-      console.log({ companySelect: !!companySelect, addJobBtn: !!addJobBtn, manageEstimatorsBtn: !!manageEstimatorsBtn });
 
       if (companySelect) {
         companySelect.addEventListener('change', async (e) => {
@@ -119,7 +115,6 @@ class App {
       const closeJobModal = document.getElementById('close-modal');
       const cancelJob = document.getElementById('cancel-btn');
       const jobForm = document.getElementById('job-form');
-      console.log({ closeJobModal: !!closeJobModal, cancelJob: !!cancelJob, jobForm: !!jobForm });
       if (closeJobModal) closeJobModal.addEventListener('click', () => this.hideModal('job-modal'));
       if (cancelJob) cancelJob.addEventListener('click', () => this.hideModal('job-modal'));
       if (jobForm) jobForm.addEventListener('submit', (e) => this.handleJobSubmit(e));
@@ -232,9 +227,142 @@ class App {
   renderJobs() {
     const filter = document.getElementById('estimator-filter');
     const estimatorFilter = filter ? filter.value : '';
-    const jobs = this.jobs.filter(j => (estimatorFilter ? j.estimator === estimatorFilter : true));
-    if (this.currentView === 'table') this.renderTableView(jobs);
-    else this.renderCardView(jobs);
+    const jobs = (Array.isArray(this.jobs) ? this.jobs : []).filter(j => (estimatorFilter ? j.estimator === estimatorFilter : true));
+
+    // Always update both views so they remain in sync. Visibility is controlled by switchView.
+    try {
+      this.renderTableView(jobs);
+    } catch (e) {
+      console.error('renderTableView failed', e);
+    }
+    try {
+      this.renderCardView(jobs);
+    } catch (e) {
+      console.error('renderCardView failed', e);
+    }
+
+    // Ensure correct container visibility
+    const tableContainer = document.getElementById('table-container');
+    const cardContainer = document.getElementById('card-container');
+    if (tableContainer) tableContainer.style.display = this.currentView === 'table' ? 'block' : 'none';
+    if (cardContainer) cardContainer.style.display = this.currentView === 'card' ? 'block' : 'none';
+
+    // Update main dashboard stats and empty state
+    try {
+      this.updateDashboardStats(jobs);
+    } catch (e) {
+      console.error('updateDashboardStats failed', e);
+    }
+  }
+
+  // Debug panel helpers
+  _ensureDebugPanel() {
+    if (document.getElementById('app-debug-panel')) return;
+    const panel = document.createElement('div');
+    panel.id = 'app-debug-panel';
+    panel.style.position = 'fixed';
+    panel.style.right = '12px';
+    panel.style.bottom = '12px';
+    panel.style.padding = '8px 12px';
+    panel.style.background = 'rgba(0,0,0,0.75)';
+    panel.style.color = 'white';
+    panel.style.fontSize = '12px';
+    panel.style.borderRadius = '8px';
+    panel.style.zIndex = 99999;
+    panel.style.maxWidth = '320px';
+    panel.style.boxShadow = '0 6px 18px rgba(0,0,0,0.4)';
+    panel.innerHTML = '<strong>App Debug</strong><div id="app-debug-content" style="margin-top:6px"></div>';
+    document.body.appendChild(panel);
+  }
+
+  _updateDebugPanel(jobs) {
+    const el = document.getElementById('app-debug-content');
+    if (!el) return;
+    const total = Array.isArray(this.jobs) ? this.jobs.length : 0;
+    const shown = jobs ? jobs.length : 0;
+    const sample = (jobs || []).slice(0,5).map(j => this.escapeHtml(this.getJobField(j, ['projectName','name','title','project']) || j.id || 'no-title')).join('<br>');
+    el.innerHTML = `Total in memory: ${total}<br>Shown (filtered): ${shown}<br><hr style="border-color:rgba(255,255,255,0.08)"><div style="max-height:120px;overflow:auto">${sample || '<em>no jobs</em>'}</div>`;
+  }
+
+  // Helper to get a job field from possible alternate keys
+  getJobField(job, keys) {
+    for (const k of keys) {
+      if (job && typeof job[k] !== 'undefined' && job[k] !== null) return job[k];
+    }
+    return '';
+  }
+
+  // Update main dashboard counters to reflect current jobs
+  updateDashboardStats(jobs) {
+    const allJobs = Array.isArray(this.jobs) ? this.jobs : [];
+    const visibleJobs = Array.isArray(jobs) ? jobs : [];
+
+    const totals = {
+      total: allJobs.length,
+      mhc: allJobs.filter(j => (j.company || '').toLowerCase() === 'mhc').length,
+      hdd: allJobs.filter(j => (j.company || '').toLowerCase() === 'hdd').length,
+      inProgress: allJobs.filter(j => (j.status || '').toLowerCase() === 'in progress').length,
+      submitted: allJobs.filter(j => (j.status || '').toLowerCase() === 'submitted').length,
+      followup: allJobs.filter(j => (j.status || '').toLowerCase() === 'follow-up required' || (j.status || '').toLowerCase() === 'follow-up' || (j.status || '').toLowerCase() === 'follow up' ).length,
+      won: allJobs.filter(j => (j.status || '').toLowerCase() === 'won').length,
+      overdue: 0,
+      totalBidValue: 0,
+      mhcBidValue: 0,
+      hddBidValue: 0
+    };
+
+    const now = new Date();
+    allJobs.forEach(j => {
+      const bid = parseFloat(j.bidAmount) || parseFloat(j.bid_amount) || 0;
+      const company = (j.company || '').toLowerCase();
+      totals.totalBidValue += bid;
+      if (company === 'mhc') totals.mhcBidValue += bid;
+      if (company === 'hdd') totals.hddBidValue += bid;
+
+      // overdue detection: deadline exists and is before today and status not 'won'/'lost'
+      const dl = this.getJobField(j, ['deadline','dueDate','date']);
+      if (dl) {
+        const dlDate = new Date(dl);
+        if (!isNaN(dlDate) && dlDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+          const st = (j.status || '').toLowerCase();
+          if (st !== 'won' && st !== 'lost') totals.overdue += 1;
+        }
+      }
+    });
+
+    // Update DOM elements if present
+    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setText('total-jobs', totals.total);
+    setText('mhc-total', totals.mhc);
+    setText('hdd-total', totals.hdd);
+    setText('in-progress-jobs', totals.inProgress);
+    setText('mhc-progress', allJobs.filter(j => (j.company||'').toLowerCase()==='mhc' && (j.status||'').toLowerCase()==='in progress').length);
+    setText('hdd-progress', allJobs.filter(j => (j.company||'').toLowerCase()==='hdd' && (j.status||'').toLowerCase()==='in progress').length);
+    setText('submitted-jobs', totals.submitted);
+    setText('mhc-submitted', allJobs.filter(j => (j.company||'').toLowerCase()==='mhc' && (j.status||'').toLowerCase()==='submitted').length);
+    setText('hdd-submitted', allJobs.filter(j => (j.company||'').toLowerCase()==='hdd' && (j.status||'').toLowerCase()==='submitted').length);
+    setText('followup-jobs', totals.followup);
+    setText('mhc-followup', allJobs.filter(j => (j.company||'').toLowerCase()==='mhc' && ((j.status||'').toLowerCase()==='follow-up required' || (j.status||'').toLowerCase()==='follow-up' || (j.status||'').toLowerCase()==='follow up')).length);
+    setText('hdd-followup', allJobs.filter(j => (j.company||'').toLowerCase()==='hdd' && ((j.status||'').toLowerCase()==='follow-up required' || (j.status||'').toLowerCase()==='follow-up' || (j.status||'').toLowerCase()==='follow up')).length);
+    setText('overdue-jobs', totals.overdue);
+    setText('mhc-overdue', allJobs.filter(j => (j.company||'').toLowerCase()==='mhc' && (() => {
+      const dl = this.getJobField(j, ['deadline','dueDate','date']);
+      return dl ? (new Date(dl) < new Date(now.getFullYear(), now.getMonth(), now.getDate())) : false;
+    })()).length);
+    setText('hdd-overdue', allJobs.filter(j => (j.company||'').toLowerCase()==='hdd' && (() => {
+      const dl = this.getJobField(j, ['deadline','dueDate','date']);
+      return dl ? (new Date(dl) < new Date(now.getFullYear(), now.getMonth(), now.getDate())) : false;
+    })()).length);
+    setText('won-jobs', totals.won);
+    setText('mhc-won', allJobs.filter(j => (j.company||'').toLowerCase()==='mhc' && (j.status||'').toLowerCase()==='won').length);
+    setText('hdd-won', allJobs.filter(j => (j.company||'').toLowerCase()==='hdd' && (j.status||'').toLowerCase()==='won').length);
+    setText('total-bid-value', `$${totals.totalBidValue.toFixed(2)}`);
+    setText('mhc-bid-value', `$${totals.mhcBidValue.toFixed(2)}`);
+    setText('hdd-bid-value', `$${totals.hddBidValue.toFixed(2)}`);
+
+    // Empty state visibility: base on visible jobs
+    const emptyState = document.getElementById('empty-state');
+    if (emptyState) emptyState.style.display = (visibleJobs && visibleJobs.length > 0) ? 'none' : 'block';
   }
 
   renderTableView(jobs) {
