@@ -1514,6 +1514,51 @@ body.modal-open {
     background: var(--gray-400);
 }
 
+/* ===== ENHANCED CLEAR FILTERS BUTTON ===== */
+#clear-filters {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--primary-color-dark);
+    background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.06), rgba(var(--primary-rgb), 0.03));
+    border: 2px dashed rgba(var(--primary-rgb), 0.12);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+#clear-filters::before {
+    content: '🧹';
+    font-size: 1rem;
+    line-height: 1;
+    display: inline-block;
+}
+
+#clear-filters:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-color);
+}
+
+#clear-filters:focus {
+    outline: none;
+    box-shadow: 0 0 0 6px rgba(var(--primary-rgb), 0.06);
+    border-color: var(--primary-color);
+}
+
+/* Make the clear button full-width and prominent on very small screens */
+@media (max-width: 480px) {
+    #clear-filters {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+    }
+}
+
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1024px) {
     .stats {
