@@ -161,6 +161,11 @@ class App {
       const manageEstimatorsBtn = document.getElementById('manage-estimators-btn');
       const tableViewBtn = document.getElementById('table-view');
       const cardViewBtn = document.getElementById('card-view');
+      const exportBtn = document.getElementById('export-btn');
+      const exportModal = document.getElementById('export-modal');
+      const closeExportModal = document.getElementById('close-export-modal');
+      const cancelExport = document.getElementById('cancel-export');
+      const confirmExport = document.getElementById('confirm-export');
 
       if (companySelect) {
         companySelect.addEventListener('change', async (e) => {
@@ -206,6 +211,20 @@ class App {
           }
         });
       }
+
+      if (exportBtn) exportBtn.addEventListener('click', () => {
+        if (exportModal) exportModal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+      });
+      if (closeExportModal) closeExportModal.addEventListener('click', () => {
+        if (exportModal) exportModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+      });
+      if (cancelExport) cancelExport.addEventListener('click', () => {
+        if (exportModal) exportModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+      });
+      if (confirmExport) confirmExport.addEventListener('click', () => this.handleExport());
 
       // Click outside modal to close
       window.addEventListener('click', (e) => {
@@ -598,6 +617,76 @@ class App {
     form.description.value = job.description || '';
     document.getElementById('job-modal').style.display = 'block';
     document.body.classList.add('modal-open');
+  }
+
+  handleExport() {
+    // Determine export format and scope
+    const format = document.querySelector('input[name="export-format"]:checked')?.value || 'csv';
+    const scope = document.querySelector('input[name="export-scope"]:checked')?.value || 'filtered';
+    let jobs = [];
+    if (scope === 'all') {
+      jobs = Array.isArray(this.allJobs) ? this.allJobs : [];
+    } else {
+      // filtered
+      const filter = document.getElementById('estimator-filter');
+      const estimatorFilter = filter ? filter.value : '';
+      jobs = (Array.isArray(this.jobs) ? this.jobs : []).filter(j => (estimatorFilter ? j.estimator === estimatorFilter : true));
+    }
+    if (format === 'csv') {
+      this.exportJobsToCSV(jobs);
+    } else {
+      alert('PDF export is not implemented in this demo.');
+    }
+    // Close modal
+    const exportModal = document.getElementById('export-modal');
+    if (exportModal) exportModal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+  }
+
+  exportJobsToCSV(jobs) {
+    if (!jobs || !jobs.length) {
+      alert('No jobs to export.');
+      return;
+    }
+    // Define columns
+    const columns = [
+      'Project Name', 'Client', 'Location', 'Estimator', 'Deadline', 'Follow-up Date',
+      'Estimating Cost', 'Bid Amount', 'Bond Amount', 'Status', 'Description', 'Company'
+    ];
+    const rows = jobs.map(j => [
+      this.getJobField(j, ['projectName','name','title','project']),
+      this.getJobField(j, ['client','customer']),
+      this.getJobField(j, ['location','site','address']),
+      this.getJobField(j, ['estimator','assignedTo']),
+      this.getJobField(j, ['deadline','dueDate','date']),
+      this.getJobField(j, ['followUpDate','follow_up_date']),
+      j.estimatingCost ?? this.getJobField(j, ['estimating_cost','estimateCost']),
+      j.bidAmount ?? this.getJobField(j, ['bid_amount','amount']),
+      j.bondAmount ?? this.getJobField(j, ['bond_amount']),
+      this.getJobField(j, ['status','state']),
+      this.getJobField(j, ['description','desc']),
+      j.company || ''
+    ]);
+    // CSV encode
+    const csv = [columns.map(this.escapeCsv).join(','), ...rows.map(r => r.map(this.escapeCsv).join(','))].join('\r\n');
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'jobs_export.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  }
+
+  escapeCsv(val) {
+    if (val == null) return '';
+    const s = String(val);
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
   }
 
   escapeHtml(str) {
