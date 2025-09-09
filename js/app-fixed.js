@@ -513,7 +513,7 @@ class App {
           <p class="text-muted">${description}</p>
         </div>
         <div class="job-card-actions">
-          <button class="btn btn-outline edit-card-btn" data-id="${id}">Edit</button>
+          <button class="edit-card-btn btn-primary" data-id="${id}" aria-label="Edit ${this.escapeHtml(projectName)}" title="Edit this job">✏️ Edit</button>
         </div>
       </div>
       `;
