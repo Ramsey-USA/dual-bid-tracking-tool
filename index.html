@@ -143,17 +143,12 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="total-bid-value">$0</div>
-                        <div class="stat-label">Total Bid Value</div>
-                        <div class="stat-breakdown">
-                            <div class="breakdown-item">
-                                <span class="breakdown-label">MHC:</span>
-                                <span class="breakdown-value" id="mhc-bid-value">$0</span>
-                            </div>
-                            <div class="breakdown-item">
-                                <span class="breakdown-label">HDD:</span>
-                                <span class="breakdown-value" id="hdd-bid-value">$0</span>
-                            </div>
+                        <div class="stat-number">Upcoming</div>
+                        <div class="stat-label">Next 3 Deadlines</div>
+                        <div class="stat-breakdown" style="flex-direction:column;align-items:flex-start;gap:0.5rem;">
+                            <ul id="next-deadlines-list" style="list-style:none;padding:0;margin:0;width:100%;">
+                                <!-- Populated with next 3 deadlines -->
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -265,17 +260,10 @@
                 </div>
                 
                 <div class="footer-section">
-                    <h5>Statistics</h5>
-                    <div class="footer-stats">
-                        <div class="footer-stat">
-                            <span id="footer-total-jobs">0</span>
-                            <small>Total Jobs</small>
-                        </div>
-                        <div class="footer-stat">
-                            <span id="footer-total-value">$0</span>
-                            <small>Total Value</small>
-                        </div>
-                    </div>
+                    <h5>Upcoming Follow-ups</h5>
+                    <ul id="footer-next-followups" class="footer-stats" style="list-style:none;padding:0;margin:0;">
+                        <li style="color:var(--gray-500)">No upcoming follow-ups</li>
+                    </ul>
                 </div>
                 
                 <div class="footer-section">

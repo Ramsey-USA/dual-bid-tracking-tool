@@ -443,6 +443,56 @@ class App {
     // Empty state visibility: base on visible jobs
     const emptyState = document.getElementById('empty-state');
     if (emptyState) emptyState.style.display = (visibleJobs && visibleJobs.length > 0) ? 'none' : 'block';
+
+    // --- New: Next 3 Deadlines list ---
+    try {
+      const deadlines = (allJobs || []).map(j => {
+        const dl = this.getJobField(j, ['deadline','dueDate','date']);
+        if (!dl) return null;
+        const date = new Date(dl);
+        if (isNaN(date)) return null;
+        return { date, title: this.getJobField(j, ['projectName','name','title']) || j.id || 'Untitled', company: j.company || '' };
+      }).filter(Boolean)
+        .filter(d => d.date >= new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())) // today or later
+        .sort((a,b) => a.date - b.date)
+        .slice(0,3);
+
+      const listEl = document.getElementById('next-deadlines-list');
+      if (listEl) {
+        if (!deadlines.length) {
+          listEl.innerHTML = '<li style="color:var(--gray-500)">No upcoming deadlines</li>';
+        } else {
+          listEl.innerHTML = deadlines.map(d => `<li><strong>${this.escapeHtml(d.title)}</strong> — <span style="color:var(--gray-600)">${d.date.toLocaleDateString()}</span>${d.company ? ' <em>(' + this.escapeHtml(d.company) + ')</em>' : ''}</li>`).join('');
+        }
+      }
+    } catch (err) {
+      console.error('Error populating next deadlines', err);
+    }
+
+    // --- New: Next 3 Follow-ups for footer ---
+    try {
+      const followups = (allJobs || []).map(j => {
+        const fu = this.getJobField(j, ['followUpDate','follow_up_date']);
+        if (!fu) return null;
+        const date = new Date(fu);
+        if (isNaN(date)) return null;
+        return { date, title: this.getJobField(j, ['projectName','name','title']) || j.id || 'Untitled', company: j.company || '' };
+      }).filter(Boolean)
+        .filter(f => f.date >= new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()))
+        .sort((a,b) => a.date - b.date)
+        .slice(0,3);
+
+      const footerList = document.getElementById('footer-next-followups');
+      if (footerList) {
+        if (!followups.length) {
+          footerList.innerHTML = '<li style="color:var(--gray-500)">No upcoming follow-ups</li>';
+        } else {
+          footerList.innerHTML = followups.map(f => `<li><strong>${this.escapeHtml(f.title)}</strong> — <span style="color:var(--gray-100)">${f.date.toLocaleDateString()}</span>${f.company ? ' <em>(' + this.escapeHtml(f.company) + ')</em>' : ''}</li>`).join('');
+        }
+      }
+    } catch (err) {
+      console.error('Error populating footer follow-ups', err);
+    }
   }
 
   renderTableView(jobs) {
